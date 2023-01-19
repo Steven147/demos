@@ -1,0 +1,16 @@
+DEBUG [CommandLine-/Users/lsq/Documents/gitfile-p/java-demo] Execute cmd(`git remote -v`) in dir /Users/lsq/Documents/gitfile-p/demos.log start  **************
+DEBUG [CommandLine-/Users/lsq/Documents/gitfile-p/java-demo] Execute cmd(`git remote -v`) in dir /Users/lsq/Documents/gitfile-p/java-demo.log start  **************
+DEBUG [CommandLine-/Users/lsq/Documents/gitfile-p/java-demo] Execute cmd(`git remote -v`) in dir /Users/lsq/Documents/gitfile-p/Java-Concurrency-in-Practice.log start  **************
+DEBUG [CommandLine-/Users/lsq/Documents/gitfile-p/java-demo] Execute cmd(`git remote -v`) in dir /Users/lsq/Documents/gitfile-p/Environment.log start  **************
+DEBUG [CommandLine-/Users/lsq/Documents/gitfile-p/java-demo] Execute cmd(`git remote -v`) in dir /Users/lsq/Documents/gitfile-p/Java-Concurrency-in-Practice.log end.exitCode:0 result:Steven147	https://github.com/Steven147/Java-Concurrency-in-Practice.git (fetch)
+Steven147	https://github.com/Steven147/Java-Concurrency-in-Practice.git (push)
+origin	https://github.com/TangBean/Java-Concurrency-in-Practice.git (fetch)
+origin	https://github.com/TangBean/Java-Concurrency-in-Practice.git (push)
+**************
+DEBUG [CommandLine-/Users/lsq/Documents/gitfile-p/java-demo] Execute cmd(`git remote -v`) in dir /Users/lsq/Documents/gitfile-p/java-demo.log end.exitCode:128 result:**************
+DEBUG [CommandLine-/Users/lsq/Documents/gitfile-p/java-demo] Execute cmd(`git remote -v`) in dir /Users/lsq/Documents/gitfile-p/demos.log end.exitCode:0 result:origin	https://github.com/Steven147/demos.git (fetch)
+origin	https://github.com/Steven147/demos.git (push)
+**************
+DEBUG [CommandLine-/Users/lsq/Documents/gitfile-p/java-demo] Execute cmd(`git remote -v`) in dir /Users/lsq/Documents/gitfile-p/Environment.log end.exitCode:0 result:origin	https://github.com/Steven147/Environment.git (fetch)
+origin	https://github.com/Steven147/Environment.git (push)
+**************
