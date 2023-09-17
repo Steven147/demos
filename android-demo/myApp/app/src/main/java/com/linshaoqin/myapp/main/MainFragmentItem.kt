@@ -5,6 +5,7 @@ import androidx.fragment.app.Fragment
 import com.linshaoqin.myapp.R
 import com.linshaoqin.myapp.SecondFragment
 import com.linshaoqin.myapp.infinityPage.InfinityPageFragment
+import com.linshaoqin.myapp.infinityViewPagerPage.InfinityViewPagerPageFragment
 import com.linshaoqin.myapp.mainPage.MainPageFragment
 
 
@@ -41,6 +42,12 @@ enum class MainPageFragmentListItem : IFragmentItem, IListItem {
         override val subtitle = "page of infinity items"
     },
 
+    INFINITY_VP_PAGE {
+        override val fragmentClass = InfinityViewPagerPageFragment::class.java
+        override val title = "infinity viewpager page"
+        override val subtitle = "page of infinity viewpager"
+    },
+
     SECOND_PAGE {
         override val fragmentClass = SecondFragment::class.java
         override val title = "second page"
@@ -48,6 +55,6 @@ enum class MainPageFragmentListItem : IFragmentItem, IListItem {
     };
 
     companion object {
-        fun getList() = listOf(INFINITY_PAGE, SECOND_PAGE)
+        fun getList() = listOf(INFINITY_VP_PAGE, INFINITY_PAGE, SECOND_PAGE)
     }
 }
