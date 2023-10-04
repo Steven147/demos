@@ -5,15 +5,20 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.navigation.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.linshaoqin.myapp.LogWrapper
 import com.linshaoqin.myapp.R
-import com.linshaoqin.myapp.main.MainFragmentViewModel
+import com.linshaoqin.myapp.main.MainActivityViewModel
 
 class MainPageAdapter(
     private val mainPageVM: MainPageViewModel,
-    private val mainFragmentVM: MainFragmentViewModel
+    private val mainActivityVM: MainActivityViewModel
 ) : RecyclerView.Adapter<MainPageAdapter.ViewHolder>() {
+
+    init {
+        LogWrapper.debug()
+    }
 
     /**
      * Provide a reference to the type of views that you are using
@@ -49,13 +54,15 @@ class MainPageAdapter(
 
         // Get element from your dataset at this position and replace the
         // contents of the view with that element
-        val data = mainPageVM.dataList.value?.get(position) ?: return
-        viewHolder.title.text = data.title
-        viewHolder.subtitle.text = data.subtitle
-        viewHolder.leftIcon.setImageResource(data.leftIcon)
-        viewHolder.rightIcon.setImageResource(data.rightIcon)
-        viewHolder.itemView.setOnClickListener {
-            mainFragmentVM.updateFragment(data)
+        val item = mainPageVM.dataList.value?.get(position) ?: return
+        viewHolder.title.text = item.title
+        viewHolder.subtitle.text = item.subtitle
+        viewHolder.leftIcon.setImageResource(item.leftIcon)
+        viewHolder.rightIcon.setImageResource(item.rightIcon)
+        viewHolder.itemView.let { itemView ->
+            itemView.setOnClickListener {
+                mainActivityVM.updatePage(itemView.findNavController(), item)
+            }
         }
     }
 

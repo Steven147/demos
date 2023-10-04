@@ -3,17 +3,18 @@
             xmlns:app="http://schemas.android.com/apk/res-auto"
             xmlns:tools="http://schemas.android.com/tools"
             android:id="@+id/nav_graph"
-            app:startDestination="@id/MainFragment">
+            app:startDestination="@id/MainPageFragment">
 
     <fragment
-            android:id="@+id/MainFragment"
+            android:id="@+id/MainPageFragment"
             android:name="com.linshaoqin.myapp.mainPage.MainPageFragment"
-            android:label="MainFragment"
+            android:label="MainPageFragment"
             tools:layout="@layout/main_page_fragment">
-
-        <action
-                android:id="@+id/action_MainFragment_to_SecondFragment"
-                app:destination="@id/SecondFragment"/>
+        <action android:id="@+id/action_MainPageFragment_to_SecondFragment2" app:destination="@id/SecondFragment"/>
+        <action android:id="@+id/action_MainPageFragment_to_infinityPageFragment"
+                app:destination="@id/infinityPageFragment"/>
+        <action android:id="@+id/action_MainPageFragment_to_infinityViewPagerPageFragment"
+                app:destination="@id/infinityViewPagerPageFragment"/>
     </fragment>
     <fragment
             android:id="@+id/SecondFragment"
@@ -21,4 +22,10 @@
             android:label="@string/second_fragment_label"
             tools:layout="@layout/fragment_second">
     </fragment>
+    <fragment android:id="@+id/infinityPageFragment"
+              android:name="com.linshaoqin.myapp.infinityPage.InfinityPageFragment"
+              android:label="InfinityPageFragment"/>
+    <fragment android:id="@+id/infinityViewPagerPageFragment"
+              android:name="com.linshaoqin.myapp.infinityViewPagerPage.InfinityViewPagerPageFragment"
+              android:label="InfinityViewPagerPageFragment"/>
 </navigation>
