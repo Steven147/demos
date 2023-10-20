@@ -1,19 +1,12 @@
 package com.linshaoqin.myapp.main
 
 import androidx.annotation.DrawableRes
-import androidx.fragment.app.Fragment
+import androidx.annotation.IdRes
 import com.linshaoqin.myapp.R
-import com.linshaoqin.myapp.SecondFragment
-import com.linshaoqin.myapp.infinityPage.InfinityPageFragment
-import com.linshaoqin.myapp.infinityViewPagerPage.InfinityViewPagerPageFragment
-import com.linshaoqin.myapp.mainPage.MainPageFragment
-
 
 interface IFragmentItem {
-
-    val fragmentClass: Class<out Fragment>
-    val addToBackStack: Boolean
-        get() = false
+    @get:IdRes
+    val startAction: Int
 }
 
 interface IListItem {
@@ -29,27 +22,22 @@ interface IListItem {
     val rightIcon: Int
         get() = R.drawable.ic_arrow_right
 }
-enum class MainFragmentItem : IFragmentItem {
-    MAIN_PAGE_FRAGMENT {
-        override val fragmentClass = MainPageFragment::class.java
-    }
-}
 
 enum class MainPageFragmentListItem : IFragmentItem, IListItem {
     INFINITY_PAGE {
-        override val fragmentClass = InfinityPageFragment::class.java
+        override val startAction = R.id.action_MainPageFragment_to_infinityPageFragment
         override val title = "infinity page"
         override val subtitle = "page of infinity items"
     },
 
     INFINITY_VP_PAGE {
-        override val fragmentClass = InfinityViewPagerPageFragment::class.java
+        override val startAction = R.id.action_MainPageFragment_to_infinityViewPagerPageFragment
         override val title = "infinity viewpager page"
         override val subtitle = "page of infinity viewpager"
     },
 
     SECOND_PAGE {
-        override val fragmentClass = SecondFragment::class.java
+        override val startAction = R.id.action_MainPageFragment_to_SecondFragment2
         override val title = "second page"
         override val subtitle = "page of second"
     };

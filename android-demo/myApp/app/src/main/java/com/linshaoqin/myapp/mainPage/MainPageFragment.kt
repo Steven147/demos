@@ -11,36 +11,32 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.linshaoqin.myapp.LogWrapper
-import com.linshaoqin.myapp.SecondFragment
-import com.linshaoqin.myapp.databinding.MainPageFragmentBinding
-import com.linshaoqin.myapp.main.MainFragmentViewModel
+import com.linshaoqin.myapp.R
+import com.linshaoqin.myapp.main.MainActivityViewModel
 
 class MainPageFragment : Fragment() {
-    private lateinit var binding: MainPageFragmentBinding
     private var recyclerView: RecyclerView? = null
     private val mainPageVM: MainPageViewModel by lazy {
         ViewModelProvider(this).get(MainPageViewModel::class.java)
     }
-    private val mainFragmentVM: MainFragmentViewModel by activityViewModels()
+    private val mainActivityVM: MainActivityViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = MainPageFragmentBinding.inflate(inflater, container, false)
-        return binding.root
+        return inflater.inflate(R.layout.main_page_fragment, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val adapter = MainPageAdapter(mainPageVM, mainFragmentVM)
-        recyclerView = binding.recyclerView
-        recyclerView?.adapter = adapter
+        recyclerView = view.findViewById(R.id.recycler_view)
+        recyclerView?.adapter = MainPageAdapter(mainPageVM, mainActivityVM)
         recyclerView?.layoutManager = LinearLayoutManager(requireContext())
 
         mainPageVM.dataList.observe(viewLifecycleOwner, Observer {
-            adapter.notifyDataSetChanged()
+            recyclerView?.adapter?.notifyDataSetChanged()
         })
 
         LogWrapper.debug()

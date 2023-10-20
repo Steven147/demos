@@ -3,9 +3,10 @@ package com.linshaoqin.myapp.main
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.navigation.NavController
 import com.linshaoqin.myapp.LogWrapper
 
-class MainFragmentViewModel : ViewModel() {
+class MainActivityViewModel : ViewModel() {
     // live data post live value and state
     private val _selectedPosition = MutableLiveData<Int>()
     val selectedPosition: LiveData<Int> get() = _selectedPosition
@@ -16,8 +17,13 @@ class MainFragmentViewModel : ViewModel() {
         _selectedPosition.value = position
     }
 
-    fun updateFragment(item: IFragmentItem) {
+    private fun updateFragment(item: IFragmentItem) {
         _currentFragment.value = item
         LogWrapper.debug()
+    }
+
+    fun updatePage(navController: NavController, item: IFragmentItem) {
+        navController.navigate(item.startAction)
+        updateFragment(item)
     }
 }
