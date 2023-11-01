@@ -1,21 +1,134 @@
 import lark_oapi as lark
-from lark_oapi.api.docx.v1 import *
-from lark_oapi.api.drive.v1 import *
-from typing import Union
+import lark_oapi.api.docx.v1 as docxV1 
+import lark_oapi.api.drive.v1 as driveV1
+import lark_oapi.api.wiki.v2 as wikiV2
+import lark_oapi.api.im.v1 as imV1
+from typing import Optional
+from lark_oapi.client import Client
 import os
 
-def create_document_request_wrapper(client, folder_token: str, title: str = ""):
+
+def list_space_request_wrapper(client: Client):
+    # 构造请求对象
+    request: wikiV2.ListSpaceRequest = wikiV2.ListSpaceRequest.builder() \
+        .build()
+
+    # 发起请求
+    response: wikiV2.ListSpaceResponse = client.wiki.v2.space.list(request)
+
+    # 处理失败返回
+    if not response.success():
+        lark.logger.error(
+            f"client.wiki.v2.space.list failed, code: {response.code}, msg: {response.msg}, log_id: {response.get_log_id()}")
+        return
+
+    # 处理业务结果
+    lark.logger.info(lark.JSON.marshal(response.data, indent=4))
+
+
+def get_space_request_wrapper(client: Client, space_id: str):
+    # 构造请求对象
+    request: wikiV2.GetSpaceRequest = wikiV2.GetSpaceRequest.builder() \
+        .space_id(space_id) \
+        .build()
+
+    # 发起请求
+    response: wikiV2.GetSpaceResponse = client.wiki.v2.space.get(request)
+
+    # 处理失败返回
+    if not response.success():
+        lark.logger.error(
+            f"client.wiki.v2.space.get failed, code: {response.code}, msg: {response.msg}, log_id: {response.get_log_id()}")
+        return
+
+    # 处理业务结果
+    lark.logger.info(lark.JSON.marshal(response.data, indent=4))
+
+
+def list_space_node_request_wrapper(client: Client, space_id: str, parent_node_token: str = "") -> Optional[wikiV2.List[wikiV2.Node]]:
+    # 构造请求对象
+    request: wikiV2.ListSpaceNodeRequest = wikiV2.ListSpaceNodeRequest.builder() \
+        .space_id(space_id) \
+        .parent_node_token(parent_node_token) \
+        .build()
+
+    # 发起请求
+    response: wikiV2.ListSpaceNodeResponse = client.wiki.v2.space_node.list(request)
+
+    # 处理失败返回
+    if not response.success():
+        lark.logger.error(
+            f"client.wiki.v2.space_node.list failed, code: {response.code}, msg: {response.msg}, log_id: {response.get_log_id()}")
+        return
+
+    # 处理业务结果
+    lark.logger.info(lark.JSON.marshal(response.data, indent=4))
+    return response.data.items
+
+def move_docs_to_wiki_space_node_request_wrapper(client: Client, space_id: int, parent_wiki_token: str, obj_token: str):
+    # 构造请求对象
+    request: wikiV2.MoveDocsToWikiSpaceNodeRequest = wikiV2.MoveDocsToWikiSpaceNodeRequest.builder() \
+        .space_id(space_id) \
+        .request_body(wikiV2.MoveDocsToWikiSpaceNodeRequestBody.builder()
+            .parent_wiki_token(parent_wiki_token)
+            .obj_type("docx")
+            .obj_token(obj_token)
+            .build()) \
+        .build()
+
+    # 发起请求
+    response: wikiV2.MoveDocsToWikiSpaceNodeResponse = client.wiki.v2.space_node.move_docs_to_wiki(request)
+
+    # 处理失败返回
+    if not response.success():
+        lark.logger.error(
+            f"client.wiki.v2.space_node.move_docs_to_wiki failed, code: {response.code}, msg: {response.msg}, log_id: {response.get_log_id()}")
+        return
+
+    # 处理业务结果
+    lark.logger.info(lark.JSON.marshal(response.data, indent=4))
+
+
+def upload_all_media_request_wrapper(client: Client, file_name: str, file_path: str, parent_type: str, parent_node: str) -> Optional[str]:
+    # 构造请求对象
+    request: driveV1.UploadAllMediaRequest = driveV1.UploadAllMediaRequest.builder() \
+        .request_body(driveV1.UploadAllMediaRequestBody.builder()
+            .file_name(file_name)
+            .parent_type(parent_type)
+            .parent_node(parent_node)
+            .size(os.path.getsize(file_path))
+            .file((open(file_path, 'rb')))
+            .build()) \
+        .build()
+
+    # 发起请求
+    response: driveV1.UploadAllMediaResponse = client.drive.v1.media.upload_all(request)
+
+    # 处理失败返回
+    if not response.success():
+        lark.logger.error(
+            f"client.drive.v1.media.upload_all failed, code: {response.code}, msg: {response.msg}, log_id: {response.get_log_id()}")
+        return
+
+    # 处理业务结果
+    lark.logger.info(lark.JSON.marshal(response.data, indent=4))
+    return response.data.file_token
+
+
+
+
+def create_document_request_wrapper(client: Client, folder_token: str, title: str = ""):
 
     # 构造请求对象
-    request: CreateDocumentRequest = CreateDocumentRequest.builder() \
-        .request_body(CreateDocumentRequestBody.builder()
+    request: docxV1.CreateDocumentRequest = docxV1.CreateDocumentRequest.builder() \
+        .request_body(docxV1.CreateDocumentRequestBody.builder()
             .folder_token(folder_token)
             .title(title)
             .build()) \
         .build()
 
     # 发起请求
-    response: CreateDocumentResponse = client.docx.v1.document.create(request)
+    response: docxV1.CreateDocumentResponse = client.docx.v1.document.create(request)
 
     # 处理失败返回
     if not response.success():
@@ -26,11 +139,11 @@ def create_document_request_wrapper(client, folder_token: str, title: str = ""):
     # 处理业务结果
     lark.logger.info(lark.JSON.marshal(response.data, indent=4))
     
-def create_export_task_request_wrapper(client, ext: str, token: str, type: str) -> Union[str, None]:
+def create_export_task_request_wrapper(client: Client, ext: str, token: str, type: str) -> Optional[str]:
 
     # 构造请求对象
-    request: CreateExportTaskRequest = CreateExportTaskRequest.builder() \
-        .request_body(ExportTask.builder()
+    request: driveV1.CreateExportTaskRequest = driveV1.CreateExportTaskRequest.builder() \
+        .request_body(driveV1.ExportTask.builder()
             .file_extension(ext)
             .token(token)
             .type(type)
@@ -38,7 +151,7 @@ def create_export_task_request_wrapper(client, ext: str, token: str, type: str) 
         .build()
 
     # 发起请求
-    response: CreateExportTaskResponse = client.drive.v1.export_task.create(request)
+    response: driveV1.CreateExportTaskResponse = client.drive.v1.export_task.create(request)
 
     # 处理失败返回
     if not response.success():
@@ -52,15 +165,15 @@ def create_export_task_request_wrapper(client, ext: str, token: str, type: str) 
     if (response.data != None):
         return response.data.ticket
 
-def get_export_task_request_wrapper(client, ticket: str, token: str) -> Union[str, None]:
+def get_export_task_request_wrapper(client: Client, ticket: str, token: str) -> Optional[str]:
     # 构造请求对象
-    request: GetExportTaskRequest = GetExportTaskRequest.builder() \
+    request: driveV1.GetExportTaskRequest = driveV1.GetExportTaskRequest.builder() \
         .ticket(ticket) \
         .token(token) \
         .build()
 
     # 发起请求
-    response: GetExportTaskResponse = client.drive.v1.export_task.get(request)
+    response: driveV1.GetExportTaskResponse = client.drive.v1.export_task.get(request)
 
     # 处理失败返回
     if not response.success():
@@ -75,14 +188,14 @@ def get_export_task_request_wrapper(client, ticket: str, token: str) -> Union[st
         return response.data.result.file_token
 
 
-def download_export_task_request_wrapper(client, file_token: str):
+def download_export_task_request_wrapper(client: Client, file_token: str, output_dir):
     # 构造请求对象
-    request: DownloadExportTaskRequest = DownloadExportTaskRequest.builder() \
+    request: driveV1.DownloadExportTaskRequest = driveV1.DownloadExportTaskRequest.builder() \
         .file_token(file_token) \
         .build()
 
     # 发起请求
-    response: DownloadExportTaskResponse = client.drive.v1.export_task.download(request)
+    response: driveV1.DownloadExportTaskResponse = client.drive.v1.export_task.download(request)
 
     # 处理失败返回
     if not response.success():
@@ -91,10 +204,123 @@ def download_export_task_request_wrapper(client, file_token: str):
         return
 
     # 处理业务结果
-    
+    lark.logger.info(lark.JSON.marshal(response.file_name, indent=4))
     dir_path = os.path.dirname(__file__)  # 获取文件所在目录路径
-    rel_path = os.path.join(dir_path, f"{response.file_name}")
+    os.makedirs(os.path.join(dir_path, output_dir), exist_ok=True)  # 创建 output 文件夹，如果已存在则不会报错
+    rel_path = os.path.join(dir_path, output_dir, f"{response.file_name}")  # 新建文件路径指向 output 文件夹
     f = open(rel_path, "wb")
     if (response.file != None):
         f.write(response.file.read())
     f.close()
+
+def create_document_block_children_request_wrapper(client: Client, document_id: str, block_id: str) -> Optional[str]:
+    body = docxV1.CreateDocumentBlockChildrenRequestBody.builder() \
+        .children(
+            [
+                docxV1.Block.builder().block_type(23).file(
+                    docxV1.File.builder()
+                        # .token(file_token)
+                        # .name("file")
+                        # .view_type(1)
+                    .build()
+                ).build()
+            ]) \
+        .index(0) \
+        .build()
+
+    # 构造请求对象
+    request: docxV1.CreateDocumentBlockChildrenRequest = docxV1.CreateDocumentBlockChildrenRequest.builder() \
+        .document_id(document_id) \
+        .block_id(block_id) \
+        .document_revision_id(-1) \
+        .request_body(body) \
+        .build()
+
+    # 发起请求
+    response: docxV1.CreateDocumentBlockChildrenResponse = client.docx.v1.document_block_children.create(request)
+
+    # 处理失败返回
+    if not response.success():
+        lark.logger.error(
+            f"client.docx.v1.document_block_children.create failed, code: {response.code}, msg: {response.msg}, log_id: {response.get_log_id()}")
+        return
+
+    # 处理业务结果
+    lark.logger.info(lark.JSON.marshal(response.data, indent=4))
+    return response.data.children[0].block_id
+
+
+def patch_document_block_request_wrapper(client: Client, document_id: str, block_id: str, file_token: str):
+
+    # 构造请求对象
+    request: docxV1.PatchDocumentBlockRequest = docxV1.PatchDocumentBlockRequest.builder() \
+        .document_id(document_id) \
+        .block_id(block_id) \
+        .request_body(docxV1.UpdateBlockRequest.builder()
+            .replace_file(docxV1.ReplaceFileRequest.builder()
+                .token(file_token)
+                .build())
+            .build()) \
+        .build()
+
+    # 发起请求
+    response: docxV1.PatchDocumentBlockResponse = client.docx.v1.document_block.patch(request)
+
+    # 处理失败返回
+    if not response.success():
+        lark.logger.error(
+            f"client.docx.v1.document_block.patch failed, code: {response.code}, msg: {response.msg}, log_id: {response.get_log_id()}")
+        return
+
+    # 处理业务结果
+    lark.logger.info(lark.JSON.marshal(response.data, indent=4))
+
+def create_file_request_wrapper(client: Client, file_name: str, file_path: str) -> Optional[str]:
+
+    # 构造请求对象
+    request: imV1.CreateFileRequest = imV1.CreateFileRequest.builder() \
+        .request_body(imV1.CreateFileRequestBody.builder()
+            .file_type("pdf")
+            .file_name(file_name)
+            .file((open(file_path, 'rb')))
+            .build()) \
+        .build()
+
+    # 发起请求
+    response: imV1.CreateFileResponse = client.im.v1.file.create(request)
+
+    # 处理失败返回
+    if not response.success():
+        lark.logger.error(
+            f"client.im.v1.file.create failed, code: {response.code}, msg: {response.msg}, log_id: {response.get_log_id()}")
+        return
+
+    # 处理业务结果
+    lark.logger.info(lark.JSON.marshal(response.data, indent=4))
+    return response.data.file_key
+
+
+
+def create_message_request_wrapper(client: Client, receive_id_type: str, receive_id: str, msg_type: str, content: str):
+
+    # 构造请求对象
+    request: imV1.CreateMessageRequest = imV1.CreateMessageRequest.builder() \
+        .receive_id_type(receive_id_type) \
+        .request_body(imV1.CreateMessageRequestBody.builder()
+            .receive_id(receive_id)
+            .msg_type(msg_type)
+            .content(content)
+            .build()) \
+        .build()
+
+    # 发起请求
+    response: imV1.CreateMessageResponse = client.im.v1.message.create(request)
+
+    # 处理失败返回
+    if not response.success():
+        lark.logger.error(
+            f"client.im.v1.message.create failed, code: {response.code}, msg: {response.msg}, log_id: {response.get_log_id()}")
+        return
+
+    # 处理业务结果
+    lark.logger.info(lark.JSON.marshal(response.data, indent=4))
