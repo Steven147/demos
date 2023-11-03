@@ -6,7 +6,7 @@ from reportlab.pdfbase.ttfonts import  TTFont
 from pdfrw import PdfReader, PdfWriter, PageMerge
 import os
 from PIL import Image
-from pdf2image import convert_from_path
+from pdf2image.pdf2image import convert_from_path
 from reportlab.lib.pagesizes import A4
 
 pdfmetrics.registerFont(TTFont("SimSun", "SimSun.ttf"))
@@ -55,20 +55,20 @@ def create_wartmark(content:str,
     c.drawString(0,0,content)
     #保存文件
     c.save()
-    
+
 
 
 def add_watermark(pdf_file, output_file, watermark, ncol, nrow): 
 	trailer = PdfReader(pdf_file)
-	for page in trailer.pages:
+	for page in trailer.pages: # pyright: ignore[reportOptionalIterable, reportGeneralTypeIssues]
 		width, height = float(page.MediaBox[2]), float(page.MediaBox[3])
 		for x in range(ncol):
 			for y in range(nrow):
-				wmark: PageMerge = PageMerge().add(PdfReader(
+				wmark: PageMerge = PageMerge().add(PdfReader( # pyright: ignore[reportOptionalSubscript]
                     os.path.join(os.path.dirname(__file__), watermark)
-                ).pages[0])[0]
-				wmark.x = width * (x) / ncol
-				wmark.y = height * ((x%2)*0.5+y) / nrow
+                ).pages[0])[0] # pyright: ignore[reportGeneralTypeIssues]
+				wmark.x = width * (x) / ncol # pyright: ignore[reportGeneralTypeIssues]
+				wmark.y = height * ((x%2)*0.5+y) / nrow # pyright: ignore[reportGeneralTypeIssues]
 				PageMerge(page).add(wmark, prepend=False).render()
 				
 	PdfWriter(output_file, trailer=trailer).write()

@@ -4,7 +4,7 @@ from flask import Flask, send_file
 
 app = Flask(__name__)
 
-# $ source /home/casaos/Documents/demos/py-server-demo/bin/activate
+# $ source /DATA/Documents/demos/py-server-demo/bin/activate
 # $ cd ~/Documents/demos/py-server-demo
 # ls
 # python server.py

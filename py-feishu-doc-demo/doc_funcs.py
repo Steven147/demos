@@ -7,14 +7,13 @@ from typing import Optional
 from lark_oapi.client import Client
 import os
 
-
 def list_space_request_wrapper(client: Client):
     # 构造请求对象
     request: wikiV2.ListSpaceRequest = wikiV2.ListSpaceRequest.builder() \
         .build()
 
     # 发起请求
-    response: wikiV2.ListSpaceResponse = client.wiki.v2.space.list(request)
+    response: wikiV2.ListSpaceResponse = client.wiki.v2.space.list(request) # pyright: ignore[reportOptionalMemberAccess]
 
     # 处理失败返回
     if not response.success():
@@ -28,12 +27,14 @@ def list_space_request_wrapper(client: Client):
 
 def get_space_request_wrapper(client: Client, space_id: str):
     # 构造请求对象
+    # pyright: ignore[reportGeneralTypeIssues]
     request: wikiV2.GetSpaceRequest = wikiV2.GetSpaceRequest.builder() \
         .space_id(space_id) \
         .build()
 
     # 发起请求
-    response: wikiV2.GetSpaceResponse = client.wiki.v2.space.get(request)
+   
+    response: wikiV2.GetSpaceResponse = client.wiki.v2.space.get(request) # pyright: ignore[reportOptionalMemberAccess]
 
     # 处理失败返回
     if not response.success():
@@ -53,7 +54,7 @@ def list_space_node_request_wrapper(client: Client, space_id: str, parent_node_t
         .build()
 
     # 发起请求
-    response: wikiV2.ListSpaceNodeResponse = client.wiki.v2.space_node.list(request)
+    response: wikiV2.ListSpaceNodeResponse = client.wiki.v2.space_node.list(request) # pyright: ignore[reportOptionalMemberAccess]
 
     # 处理失败返回
     if not response.success():
@@ -63,7 +64,7 @@ def list_space_node_request_wrapper(client: Client, space_id: str, parent_node_t
 
     # 处理业务结果
     lark.logger.info(lark.JSON.marshal(response.data, indent=4))
-    return response.data.items
+    return response.data.items # pyright: ignore[reportOptionalMemberAccess]
 
 def move_docs_to_wiki_space_node_request_wrapper(client: Client, space_id: int, parent_wiki_token: str, obj_token: str):
     # 构造请求对象
@@ -77,7 +78,7 @@ def move_docs_to_wiki_space_node_request_wrapper(client: Client, space_id: int, 
         .build()
 
     # 发起请求
-    response: wikiV2.MoveDocsToWikiSpaceNodeResponse = client.wiki.v2.space_node.move_docs_to_wiki(request)
+    response: wikiV2.MoveDocsToWikiSpaceNodeResponse = client.wiki.v2.space_node.move_docs_to_wiki(request) # pyright: ignore[reportOptionalMemberAccess]
 
     # 处理失败返回
     if not response.success():
@@ -102,7 +103,7 @@ def upload_all_media_request_wrapper(client: Client, file_name: str, file_path: 
         .build()
 
     # 发起请求
-    response: driveV1.UploadAllMediaResponse = client.drive.v1.media.upload_all(request)
+    response: driveV1.UploadAllMediaResponse = client.drive.v1.media.upload_all(request) # pyright: ignore[reportOptionalMemberAccess]
 
     # 处理失败返回
     if not response.success():
@@ -112,7 +113,7 @@ def upload_all_media_request_wrapper(client: Client, file_name: str, file_path: 
 
     # 处理业务结果
     lark.logger.info(lark.JSON.marshal(response.data, indent=4))
-    return response.data.file_token
+    return response.data.file_token # pyright: ignore[reportOptionalMemberAccess]
 
 
 
@@ -128,7 +129,7 @@ def create_document_request_wrapper(client: Client, folder_token: str, title: st
         .build()
 
     # 发起请求
-    response: docxV1.CreateDocumentResponse = client.docx.v1.document.create(request)
+    response: docxV1.CreateDocumentResponse = client.docx.v1.document.create(request) # pyright: ignore[reportOptionalMemberAccess]
 
     # 处理失败返回
     if not response.success():
@@ -151,7 +152,7 @@ def create_export_task_request_wrapper(client: Client, ext: str, token: str, typ
         .build()
 
     # 发起请求
-    response: driveV1.CreateExportTaskResponse = client.drive.v1.export_task.create(request)
+    response: driveV1.CreateExportTaskResponse = client.drive.v1.export_task.create(request) # pyright: ignore[reportOptionalMemberAccess]
 
     # 处理失败返回
     if not response.success():
@@ -173,7 +174,7 @@ def get_export_task_request_wrapper(client: Client, ticket: str, token: str) -> 
         .build()
 
     # 发起请求
-    response: driveV1.GetExportTaskResponse = client.drive.v1.export_task.get(request)
+    response: driveV1.GetExportTaskResponse = client.drive.v1.export_task.get(request) # pyright: ignore[reportOptionalMemberAccess]
 
     # 处理失败返回
     if not response.success():
@@ -195,7 +196,7 @@ def download_export_task_request_wrapper(client: Client, file_token: str, output
         .build()
 
     # 发起请求
-    response: driveV1.DownloadExportTaskResponse = client.drive.v1.export_task.download(request)
+    response: driveV1.DownloadExportTaskResponse = client.drive.v1.export_task.download(request) # pyright: ignore[reportOptionalMemberAccess]
 
     # 处理失败返回
     if not response.success():
@@ -237,7 +238,7 @@ def create_document_block_children_request_wrapper(client: Client, document_id: 
         .build()
 
     # 发起请求
-    response: docxV1.CreateDocumentBlockChildrenResponse = client.docx.v1.document_block_children.create(request)
+    response: docxV1.CreateDocumentBlockChildrenResponse = client.docx.v1.document_block_children.create(request) # pyright: ignore[reportOptionalMemberAccess]
 
     # 处理失败返回
     if not response.success():
@@ -247,7 +248,7 @@ def create_document_block_children_request_wrapper(client: Client, document_id: 
 
     # 处理业务结果
     lark.logger.info(lark.JSON.marshal(response.data, indent=4))
-    return response.data.children[0].block_id
+    return response.data.children[0].block_id  # pyright: ignore[reportOptionalSubscript, reportOptionalMemberAccess]
 
 
 def patch_document_block_request_wrapper(client: Client, document_id: str, block_id: str, file_token: str):
@@ -264,7 +265,7 @@ def patch_document_block_request_wrapper(client: Client, document_id: str, block
         .build()
 
     # 发起请求
-    response: docxV1.PatchDocumentBlockResponse = client.docx.v1.document_block.patch(request)
+    response: docxV1.PatchDocumentBlockResponse = client.docx.v1.document_block.patch(request)  # pyright: ignore[reportOptionalMemberAccess]
 
     # 处理失败返回
     if not response.success():
@@ -287,7 +288,7 @@ def create_file_request_wrapper(client: Client, file_name: str, file_path: str) 
         .build()
 
     # 发起请求
-    response: imV1.CreateFileResponse = client.im.v1.file.create(request)
+    response: imV1.CreateFileResponse = client.im.v1.file.create(request)# pyright: ignore[reportOptionalMemberAccess]
 
     # 处理失败返回
     if not response.success():
@@ -297,7 +298,7 @@ def create_file_request_wrapper(client: Client, file_name: str, file_path: str) 
 
     # 处理业务结果
     lark.logger.info(lark.JSON.marshal(response.data, indent=4))
-    return response.data.file_key
+    return response.data.file_key # pyright: ignore[reportOptionalMemberAccess]
 
 
 
@@ -314,7 +315,7 @@ def create_message_request_wrapper(client: Client, receive_id_type: str, receive
         .build()
 
     # 发起请求
-    response: imV1.CreateMessageResponse = client.im.v1.message.create(request)
+    response: imV1.CreateMessageResponse = client.im.v1.message.create(request)# pyright: ignore[reportOptionalMemberAccess]
 
     # 处理失败返回
     if not response.success():
