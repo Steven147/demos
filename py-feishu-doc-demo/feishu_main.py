@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from doc_funcs import *
 from create_watermark import trans_to_watermark_file
+from database.coding_funcs import get_card_source_string
 import time
 
 def export_file(client, token):
@@ -107,31 +108,7 @@ def send_card(user_id: str):
         receive_id_type="user_id",
         receive_id=user_id,
         msg_type="interactive",
-        content="{\"config\":{\"wide_screen_mode\":true},\"header\":{\"template\":\"blue\",\"title\":{"
-                "\"tag\":\"plain_text\",\"content\":\"文档编码生成卡片\"}},\"card_link\":{\"url\":\"\",\"pc_url\":\"\","
-                "\"android_url\":\"\",\"ios_url\":\"\"},\"elements\":[{\"tag\":\"div\",\"text\":{\"tag\":\"lark_md\","
-                "\"content\":\"请输入文档分类\"},\"extra\":{\"tag\":\"select_static\",\"placeholder\":{"
-                "\"tag\":\"plain_text\",\"content\":\"文档分类\"},\"value\":{\"key\":\"category\"},\"options\":[{"
-                "\"text\":{\"tag\":\"plain_text\",\"content\":\"秘笈A\"},\"value\":\"秘笈A\"},{\"text\":{"
-                "\"tag\":\"plain_text\",\"content\":\"表达B\"},\"value\":\"表达B\"},{\"text\":{\"tag\":\"plain_text\","
-                "\"content\":\"行为C\"},\"value\":\"行为C\"},{\"text\":{\"tag\":\"plain_text\",\"content\":\"操作D\"},"
-                "\"value\":\"操作D\"}]}},{\"tag\":\"div\",\"text\":{\"tag\":\"lark_md\",\"content\":\"请输入版块\"},"
-                "\"extra\":{\"tag\":\"select_static\",\"placeholder\":{\"tag\":\"plain_text\",\"content\":\"版块\"},"
-                "\"value\":{\"key\":\"section\"},\"options\":[{\"text\":{\"tag\":\"plain_text\","
-                "\"content\":\"爱相伴01\"},\"value\":\"爱相伴01\"},{\"text\":{\"tag\":\"plain_text\","
-                "\"content\":\"爱相随02\"},\"value\":\"爱相随02\"},{\"text\":{\"tag\":\"plain_text\","
-                "\"content\":\"爱相遇03\"},\"value\":\"爱相遇03\"},{\"text\":{\"tag\":\"plain_text\","
-                "\"content\":\"爱未来04\"},\"value\":\"爱未来04\"}]}},{\"tag\":\"div\",\"text\":{\"tag\":\"lark_md\","
-                "\"content\":\"请输入关系\"},\"extra\":{\"tag\":\"select_static\",\"placeholder\":{\"tag\":\"plain_text\","
-                "\"content\":\"关系\"},\"value\":{\"key\":\"relationship\"},\"options\":[{\"text\":{"
-                "\"tag\":\"plain_text\",\"content\":\"生命成长类\"},\"value\":\"生命成长类\"},{\"text\":{"
-                "\"tag\":\"plain_text\",\"content\":\"亲子关系类\"},\"value\":\"亲子关系类\"},{\"text\":{"
-                "\"tag\":\"plain_text\",\"content\":\"孝亲关系类\"},\"value\":\"孝亲关系类\"},{\"text\":{"
-                "\"tag\":\"plain_text\",\"content\":\"夫妻关系类\"},\"value\":\"夫妻关系类\"}]}},{\"tag\":\"div\","
-                "\"text\":{\"tag\":\"lark_md\","
-                "\"content\":\"选择完成后，点击确认，会自动生成文档对应的**编码**。\\n同时会以编码作为标题在知识库中新建文档，返回文档**链接**。\"},\"extra\":{"
-                "\"tag\":\"button\",\"text\":{\"tag\":\"lark_md\",\"content\":\"确认\"},\"type\":\"primary\","
-                "\"value\":{\"key\":\"confirm\"}}}]}"
+        content=get_card_source_string()
     )
     # patch_message_request_wrapper(client)
 
