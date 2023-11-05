@@ -338,11 +338,12 @@ def create_message_request_wrapper(client: Client, receive_id_type: str, receive
     lark.logger.info(lark.JSON.marshal(response.data, indent=4))
 
 
-def patch_message_request_wrapper(client: Client):
+def patch_message_request_wrapper(client: Client, message_id: str, content: str):
     # 构造请求对象
     request: imV1.PatchMessageRequest = imV1.PatchMessageRequest.builder() \
+        .message_id(message_id) \
         .request_body(imV1.PatchMessageRequestBody.builder()
-                      .content("参考链接")
+                      .content(content)
                       .build()) \
         .build()
 
@@ -354,6 +355,3 @@ def patch_message_request_wrapper(client: Client):
         lark.logger.error(
             f"client.im.v1.message.patch failed, code: {response.code}, msg: {response.msg}, log_id: {response.get_log_id()}")
         return
-
-    # 处理业务结果
-    lark.logger.info(lark.JSON.marshal(response.data, indent=4))

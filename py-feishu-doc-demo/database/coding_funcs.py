@@ -10,14 +10,22 @@ class Document(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     category = Column(String)
-    section = Column(Integer)
-    relationship = Column(Integer)
+    section = Column(String)
+    relationship = Column(String)
     document_number = Column(Integer)
     title = Column(String(50))
 
     def print_record(self):
-        print(f"[show_record] code_title: {self.category} {self.section:02d} " +
+        print(f"[show_record] code_title: {self.category} {self.section} " +
               f"{self.relationship} {self.document_number:03d} {self.title}")
+        return f"{self.category}{self.section}{self.relationship}{self.document_number:03d}{self.title}"
+
+    @staticmethod
+    def print_code(category, section, relationship, document_number):
+        print(f"[print_code] code: {category} {section} " +
+              f"{relationship} {document_number:03d}")
+        return f"{category}{section}{relationship}{document_number:03d}"
+
 
 
 # 创建engine，并连接SQLite数据库
@@ -49,22 +57,22 @@ class Mappings:
             'text': "请输入版块",
             'placeholder': "版块",
             'option': {
-                '爱相伴': 1,
-                '爱相随': 2,
-                '爱相遇': 3,
-                '爱未来': 4,
-                '不确定': 5,
+                '爱相伴': '01',
+                '爱相随': '02',
+                '爱相遇': '03',
+                '爱未来': '04',
+                '不确定': '05',
             }
         },
         'relationship': {
             'text': "请输入关系",
             'placeholder': "关系",
             'option': {
-                '生命成长类': 1,
-                '亲子关系类': 2,
-                '孝亲关系类': 3,
-                '夫妻关系类': 4,
-                '通用关系类': 0,
+                '生命成长类': '01',
+                '亲子关系类': '02',
+                '孝亲关系类': '03',
+                '夫妻关系类': '04',
+                '通用关系类': '00',
                 # '生命成长类': 'I',
                 # '亲子关系类': 'II',
                 # '孝亲关系类': 'III',
@@ -84,7 +92,7 @@ class Mappings:
         return Mappings.mappings.get(key).get('option').get(option_str)
 
 
-def generate_elements():
+def generate_elements(result: str):
     elements = []
     for key, details in Mappings.mappings.items():
         options = [
@@ -120,7 +128,8 @@ def generate_elements():
             "tag": "div",
             "text": {
                 "tag": "lark_md",
-                "content": "选择完成后，点击确认，会自动生成文档对应的**编码**。\n同时会以编码作为标题在知识库中新建文档，返回文档**链接**。"
+                "content": "选择完成后，点击确认，会自动生成文档对应的**编码**。" + result +
+                           "\n同时会以编码作为标题在知识库中新建文档，返回文档**链接**。"
             },
             "extra": {
                 "tag": "button",
@@ -138,7 +147,7 @@ def generate_elements():
     return elements
 
 
-def get_card_source_string():
+def get_card_source_string(result=''):
     data = {
         "config": {
             "wide_screen_mode": True
@@ -156,9 +165,9 @@ def get_card_source_string():
             "android_url": "",
             "ios_url": ""
         },
-        "elements": generate_elements(),
+        "elements": generate_elements(result),
     }
-    print('[get_card_source_string]:' + json.dumps(data, indent=2, ensure_ascii=False))
+    # print('[get_card_source_string]:' + json.dumps(data, indent=2, ensure_ascii=False))
     return json.dumps(data, separators=(',', ':'))
 
 

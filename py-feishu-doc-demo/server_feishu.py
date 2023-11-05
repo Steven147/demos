@@ -9,7 +9,7 @@ import lark_oapi as lark
 import lark_oapi.adapter.flask as lFlask
 import lark_oapi.api.im.v1 as imV1
 from lark_oapi.api.application.v6.model.p2_application_bot_menu_v6 import P2ApplicationBotMenuV6
-from feishu_main import output_wrapper, send_card
+from feishu_main import output_wrapper, send_card, update_card
 
 from threading import Thread
 import asyncio
@@ -85,7 +85,9 @@ def do_customized_event(data: lark.CustomizedEvent) -> None:
     print(lark.JSON.marshal(data))
 
 
-handler = lark.EventDispatcherHandler.builder("", "sIbA8tRAgaRNQo9MjKsZUbvYMTp1jXo0", lark.LogLevel.DEBUG) \
+token = "sIbA8tRAgaRNQo9MjKsZUbvYMTp1jXo0"
+
+handler = lark.EventDispatcherHandler.builder("", token, lark.LogLevel.DEBUG) \
     .register_p2_im_message_receive_v1(do_p2_im_message_receive_v1) \
     .register_p2_application_bot_menu_v6(do_p2_application_bot_menu_v6) \
     .register_p1_customized_event("message", do_customized_event) \
@@ -98,13 +100,21 @@ def index():
 
 
 @app.route('/event', methods=['POST'])
-def handle_verification():
+def handle_event():
+    print("[handle_event] ---call---")
     data = request.get_json()
     if 'type' in data and data['type'] == 'url_verification':
-        print(data)
+        print("[url_verification]" + data['challenge'])
         return jsonify({
             'challenge': data['challenge']
         })
+
+    if 'token' in data \
+            and data['token'] != token \
+            and 'action' in data:
+        print("[update_card] call" + str(data))
+        new_loop.call_soon_threadsafe(update_card, data)
+        return jsonify({"message": "Data received successfully"}), 200
 
     resp = handler.do(lFlask.parse_req())
     return lFlask.parse_resp(resp)
@@ -119,4 +129,4 @@ def handle_verification():
 
 if __name__ == '__main__':
     # ip = socket.gethostbyname(socket.gethostname()) todo get by socket
-    app.run(port=5000)  # (host='192.168.0.107', port=5000) # sudo ufw allow 5000
+    app.run(port=5000, threaded=True)  # (host='192.168.0.107', port=5000) # sudo ufw allow 5000
