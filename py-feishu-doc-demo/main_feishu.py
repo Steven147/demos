@@ -16,6 +16,9 @@ import time
 app_id = 'cli_a5bb0a8ac8f99013'
 app_secret = 'rceFwGZuDFcP1fYwjc812ftAsysPK1MZ'
 space_id = "7291489975366270978"
+root_dir = os.path.dirname(__file__)
+input_dir = os.path.join(root_dir, 'input_file')
+output_dir = os.path.join(root_dir, 'output_file')  # 新建文件路径指向 output 文件夹
 # 创建client
 client = lark.Client.builder() \
     .app_id(app_id) \
@@ -25,6 +28,7 @@ client = lark.Client.builder() \
 
 new_code_title_prefix = "编码："
 search_code_prefix = "查询："
+output_code_prefix = "导出："
 multi_search_code_prefix = "批量查询："
 multi_output_code_prefix = "批量导出："
 wiki_link_prefix = 'https://h4c12uuoah.feishu.cn/wiki/'
@@ -35,13 +39,14 @@ classmap = {
 }
 
 
+# todo 改为异步获取
 def export_file(client, token):
     attempts = 0  # 初始化轮询计数器
     max_attempts = 5
     interval = 1
 
     ticket = create_export_task_request_wrapper(client, ext="pdf", token=token, type='docx')
-    if ticket == None:
+    if ticket is None:
         return
 
     file_token = None  # 初始化最后一次轮询的结果
@@ -103,6 +108,43 @@ def send_code_params_guide(user_id: str):
 
 
 def output_func(message_str: str, user_id: str):
+    old_doc = find_manual_record(message_str.removeprefix(output_code_prefix))
+    if not old_doc:
+        create_message_request_wrapper(
+            client,
+            receive_id_type="user_id",
+            receive_id=user_id,
+            msg_type="text",
+            content="{\"text\":\"找不到对应文档\"}"
+        )
+    else:
+        file_name = f"{str(old_doc.get_code_title())}.pdf"
+
+        for _, _, file_names in os.walk(input_dir):
+            if file_name not in file_names:
+                export_file(client, old_doc.obj_token)
+
+        for dir_path, _, file_names in os.walk(output_dir):
+            if file_name not in file_names:
+                trans_to_watermark_file(
+                    name='爱与幸福文字中心',
+                    input_dir=input_dir,
+                    output_dir=output_dir,
+                    new_watermark=True
+                )
+            file_key = create_file_request_wrapper(client, file_name, os.path.join(dir_path, file_name))
+            content = "{\"file_key\":\"%s\"}" % file_key
+            create_message_request_wrapper(
+                client, receive_id_type="user_id", receive_id=user_id, msg_type="file",
+                content=content
+            )
+
+
+def multi_output_func(message_str: str, user_id: str):
+    pass
+
+
+def multi_get_code_params(message_str: str, user_id: str):
     pass
 
 
@@ -154,10 +196,6 @@ def new_code_params(message_str: str, user_id: str):
 
 
 def output_wrapper(user_id: str):
-    root_dir = os.path.dirname(__file__)
-    input_dir = os.path.join(root_dir, 'input_file')
-    output_dir = os.path.join(root_dir, 'output_file')  # 新建文件路径指向 output 文件夹
-
     need_update = True
     need_upload = True
     space_id = '7291489975366270978'
@@ -194,7 +232,6 @@ def output_wrapper(user_id: str):
                                        content="{\"text\":\"all files output\"}")
         for dir_path, dirnames, file_names in os.walk(output_dir):
             for file_name in sorted(file_names):
-                file_path = os.path.join(dir_path, file_name)
                 # file_token = upload_all_media_request_wrapper(
                 #         client=client,
                 #         file_name=file_name,
@@ -206,7 +243,7 @@ def output_wrapper(user_id: str):
                 # patch_document_block_request_wrapper(client, document_id=obj_token, block_id=block_id, file_token=file_token)
                 # file_tokens.append(file_token)
 
-                file_key = create_file_request_wrapper(client, file_name, file_path)
+                file_key = create_file_request_wrapper(client, file_name, os.path.join(dir_path, file_name))
                 content = "{\"file_key\":\"%s\"}" % file_key
                 create_message_request_wrapper(client, receive_id_type="user_id", receive_id=user_id, msg_type="file",
                                                content=content)
@@ -257,13 +294,12 @@ def update_card(body):
 
 
 # 根据wiki response数据，新建数据库记录
-def new_db_record(message_str: str, parent_node_token: str, node_token: str):
+def new_db_record(message_str: str, parent_node_token: str, node_token: str, obj_token: str):
     mapped_category, mapped_section, mapped_relationship, document_number, title = get_code_title_list(message_str)
     set_new_doc(
         mapped_category, mapped_section, mapped_relationship, document_number, title,
-        node_token, parent_node_token
+        node_token, obj_token, parent_node_token
     )
-    Document.commit_session()
 
 
 # 调用
@@ -276,8 +312,7 @@ def sync_db_with_wiki():
     for parent_node in parent_nodes:
         nodes = list_space_node_request_wrapper(client, space_id, parent_node)  # 遍历
         for node in nodes:
-            print(str(node))
-            new_db_record(node.title, node.parent_node_token, node.node_token)
+            new_db_record(node.title, node.parent_node_token, node.node_token, node.obj_token)
 
 
 if __name__ == "__main__":

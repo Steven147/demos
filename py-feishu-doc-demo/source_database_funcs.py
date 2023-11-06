@@ -16,7 +16,16 @@ class Document(Base):
     document_number = Column(Integer)
     title = Column(String(50))
     token = Column(String(30))
+    obj_token = Column(String(30))
     parent_token = Column(String(30))
+
+    def print_doc(self):
+        strings = \
+            f"[print_code] code: {self.category} {self.section} "\
+            f"{self.relationship}{self.document_number:03d} {self.title}"\
+            f"token:{self.token} obj_token:{self.obj_token} parent_token:{self.parent_token}"
+        print(strings)
+        return strings
 
     def get_code_title(self):
         print(f"[show_record] code_title: {self.category} {self.section} " +
@@ -99,6 +108,11 @@ class Mappings:
     def get_option_suggest(key: str):
         value = Mappings.mappings.get(key)
         return f"{value.get('text')}({'、'.join(value.get('option').keys())}):"
+
+    @staticmethod
+    def get_option_value(key: str):
+        value = Mappings.mappings.get(key)
+        return f"{value.get('text')}({'、'.join(value.get('option').values())}):"
 
     @staticmethod
     def map_option(key: str, option_str: str):
@@ -216,6 +230,7 @@ def set_manual_record(message: str):
         document_number,
         title,
         token='',
+        obj_token='',
         mapped_parent_token=mapped_parent_token,
     )
 
@@ -234,6 +249,9 @@ def find_manual_record(message: str):
     ).first()
 
 
+# def find_class_record(message: str):
+
+
 # def set_record_with_code_title(code_title: str):
 #     """
 #     :param code_title:
@@ -250,7 +268,8 @@ def find_manual_record(message: str):
 #     set_new_doc(mapped_category, mapped_section, mapped_relationship, document_number, title)
 
 
-def set_new_doc(mapped_category, mapped_section, mapped_relationship, document_number, title, token, mapped_parent_token):
+def set_new_doc(mapped_category, mapped_section, mapped_relationship, document_number,
+                title, token, obj_token, mapped_parent_token):
     new_doc = Document(
         category=mapped_category,
         section=mapped_section,
@@ -258,9 +277,10 @@ def set_new_doc(mapped_category, mapped_section, mapped_relationship, document_n
         document_number=int(document_number),
         title=title,
         token=token,
+        obj_token=obj_token,
         parent_token=mapped_parent_token
     )
-    new_doc.get_code_title()
+    new_doc.print_doc()
     session.add(new_doc)
     session.commit()
     return new_doc
