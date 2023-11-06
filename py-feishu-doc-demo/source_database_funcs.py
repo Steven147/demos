@@ -5,6 +5,7 @@ import json
 Base = declarative_base()
 
 
+# 要定义在 create session 之前
 class Document(Base):
     __tablename__ = 'document'
 
@@ -14,18 +15,23 @@ class Document(Base):
     relationship = Column(String)
     document_number = Column(Integer)
     title = Column(String(50))
+    token = Column(String(30))
+    parent_token = Column(String(30))
 
-    def print_record(self):
+    def get_code_title(self):
         print(f"[show_record] code_title: {self.category} {self.section} " +
               f"{self.relationship} {self.document_number:03d} {self.title}")
         return f"{self.category}{self.section}{self.relationship}{self.document_number:03d}{self.title}"
 
     @staticmethod
-    def print_code(category, section, relationship, document_number):
+    def get_code(category, section, relationship, document_number):
         print(f"[print_code] code: {category} {section} " +
               f"{relationship} {document_number:03d}")
         return f"{category}{section}{relationship}{document_number:03d}"
 
+    @staticmethod
+    def commit_session():
+        session.commit()
 
 
 # 创建engine，并连接SQLite数据库
@@ -80,6 +86,13 @@ class Mappings:
                 # '通用关系类': 'V',
             }
         },
+        'class_name': {
+            'text': "请输入课程名称",
+            'option': {
+                '网络七期': 'VwrUwqamZiGRpGkndmGcFBJhn2d',
+                '亲子关系类': 'LU46wq2kIixvGVkfenqcX4bMnfc',
+            }
+        }
     }
 
     @staticmethod
@@ -188,44 +201,69 @@ def get_origin_code_titles():
     ]
 
 
-def set_manual_record():
+def set_manual_record(message: str):
     """
     set record manually, count new document bigger than others in the same type
     """
-    params = map_manual_input()
-    mapped_category, mapped_section, mapped_relationship, title = params
+    params = map_manual_input(message)
+    mapped_category, mapped_section, mapped_relationship, mapped_parent_token, title = params
     document_number = get_next_document_number(mapped_category, mapped_section, mapped_relationship)
 
-    set_new_doc(mapped_category, mapped_section, mapped_relationship, document_number, title)
+    return set_new_doc(
+        mapped_category,
+        mapped_section,
+        mapped_relationship,
+        document_number,
+        title,
+        token='',
+        mapped_parent_token=mapped_parent_token,
+    )
 
 
-def set_record_with_code_title(code_title: str):
+def find_manual_record(message: str):
     """
-    :param code_title:
-    set record with code title, if exited, delete record
+    set record manually, count new document bigger than others in the same type
     """
-    mapped_category, mapped_section, mapped_relationship, document_number, title = get_code_title_list(code_title)
+    mapped_category, mapped_section, mapped_relationship, document_number_str, _ = (
+        get_code_title_list(message))
+    return session.query(Document).filter_by(
+        category=mapped_category, section=mapped_section, relationship=mapped_relationship,
+        document_number=int(document_number_str)
+    ).order_by(
+        Document.document_number.desc()
+    ).first()
 
-    # 去重复
-    for result in get_results(mapped_category, mapped_section, mapped_relationship):
-        if result.document_number == document_number:
-            print("[set_record_with_code_title] document_number duplicated, force replace title")
-            session.delete(result)
 
-    set_new_doc(mapped_category, mapped_section, mapped_relationship, document_number, title)
+# def set_record_with_code_title(code_title: str):
+#     """
+#     :param code_title:
+#     set record with code title, if exited, delete record
+#     """
+#     mapped_category, mapped_section, mapped_relationship, document_number, title = get_code_title_list(code_title)
+#
+#     # 去重复
+#     for result in get_results(mapped_category, mapped_section, mapped_relationship):
+#         if result.document_number == document_number:
+#             print("[set_record_with_code_title] document_number duplicated, force replace title")
+#             session.delete(result)
+#
+#     set_new_doc(mapped_category, mapped_section, mapped_relationship, document_number, title)
 
 
-def set_new_doc(mapped_category, mapped_section, mapped_relationship, document_number, title):
+def set_new_doc(mapped_category, mapped_section, mapped_relationship, document_number, title, token, mapped_parent_token):
     new_doc = Document(
         category=mapped_category,
         section=mapped_section,
         relationship=mapped_relationship,
-        document_number=document_number,
-        title=title
+        document_number=int(document_number),
+        title=title,
+        token=token,
+        parent_token=mapped_parent_token
     )
-    new_doc.print_record()
+    new_doc.get_code_title()
     session.add(new_doc)
     session.commit()
+    return new_doc
 
 
 def get_code_title_list(code_title: str):
@@ -237,8 +275,7 @@ def get_code_title_list(code_title: str):
     for length in code_lengths:
         # 切片字符串
         part = code_title[start:start + length]
-        # 这一句将所有非零数字字符转换为整数，其他字符（包括零）保持不变
-        result.append(int(part) if part.isdigit() and int(part) != 0 else part)
+        result.append(part)
         # 滑动窗口
         start += length
 
@@ -247,18 +284,20 @@ def get_code_title_list(code_title: str):
     return result
 
 
-def map_manual_input():
+def map_manual_input(message: str):
+    category, section, relationship, class_name, title = message.split("、")
     # 获取用户输入
-    category = input(Mappings.get_option_suggest('category'))
-    section = input(Mappings.get_option_suggest('section'))
-    relationship = input(Mappings.get_option_suggest('relationship'))
-    title = input('请输入标题:')
+    # category = input(Mappings.get_option_suggest('category'))
+    # section = input(Mappings.get_option_suggest('section'))
+    # relationship = input(Mappings.get_option_suggest('relationship'))
+    # title = input('请输入标题:')
 
     # 映射输入
     mapped_category = Mappings.map_option("category", category)
     mapped_section = Mappings.map_option("section", section)
     mapped_relationship = Mappings.map_option("relationship", relationship)
-    return mapped_category, mapped_section, mapped_relationship, title
+    mapped_parent_token = Mappings.map_option("class_name", class_name)
+    return mapped_category, mapped_section, mapped_relationship, mapped_parent_token, title
 
 
 def get_next_document_number(mapped_category, mapped_section, mapped_relationship):
@@ -284,12 +323,13 @@ def show_record():
     docs = session.query(Document).filter(Document.id > 0)
     # 显示查询结果
     for doc in docs:
-        doc.print_record()
+        doc.get_code_title()
 
 
 if __name__ == "__main__":
     # print(get_card_source_string())
-    set_manual_record()
+    # set_manual_record()
     # for code_title in get_origin_code_titles():
     #     set_record_with_code_title(code_title)
     # show_record()
+    pass

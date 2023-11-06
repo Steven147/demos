@@ -355,3 +355,30 @@ def patch_message_request_wrapper(client: Client, message_id: str, content: str)
         lark.logger.error(
             f"client.im.v1.message.patch failed, code: {response.code}, msg: {response.msg}, log_id: {response.get_log_id()}")
         return
+
+
+def create_document_request_wrapper(client: Client, space_id: str, folder_token: str, title: str):
+    # 构造请求对象
+    request: wikiV2.CreateSpaceNodeRequest = wikiV2.CreateSpaceNodeRequest.builder() \
+        .space_id(space_id) \
+        .request_body(wikiV2.Node.builder()
+                      .obj_type("docx")
+                      .parent_node_token(folder_token)
+                      .node_type("origin")
+                      .origin_node_token("")
+                      .title(title)
+                      .build()) \
+        .build()
+
+    # 发起请求
+    response: wikiV2.CreateSpaceNodeResponse = client.wiki.v2.space_node.create(request)
+
+    # 处理失败返回
+    if not response.success():
+        lark.logger.error(
+            f"client.wiki.v2.space_node.create, code: {response.code}, msg: {response.msg}, log_id: {response.get_log_id()}")
+        return
+
+    # 处理业务结果
+    lark.logger.info(lark.JSON.marshal(response.data, indent=4))
+    return response.data.node.node_token

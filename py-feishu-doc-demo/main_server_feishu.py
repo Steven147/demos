@@ -1,15 +1,12 @@
-import os
-import random
 from flask import Flask, request, jsonify
-import hashlib
 import json
 
-from typing import Optional
 import lark_oapi as lark
 import lark_oapi.adapter.flask as lFlask
 import lark_oapi.api.im.v1 as imV1
 from lark_oapi.api.application.v6.model.p2_application_bot_menu_v6 import P2ApplicationBotMenuV6
-from feishu_main import output_wrapper, send_card, update_card
+from main_feishu import output_wrapper, get_code_params, update_card, send_code_params_guide, new_code_params, \
+    new_code_title_prefix, search_code_prefix, multi_search_code_prefix
 
 from threading import Thread
 import asyncio
@@ -37,12 +34,12 @@ import asyncio
 # conda activate feishu-robot
 # pip install lark_oapi reportlab pdfrw pdf2image flask
 
-# python server_feishu.py 
+# python main_server_feishu.py
 
 # tmux attach -t feishu-robot-session
 # cd /DATA/Documents/demos/py-feishu-doc-demo
 # conda activate feishu-robot
-# python server_feishu.py 
+# python main_server_feishu.py
 
 
 app = Flask(__name__)
@@ -59,23 +56,27 @@ t.start()
 
 
 def do_p2_im_message_receive_v1(data: imV1.P2ImMessageReceiveV1) -> None:
-    if not data or \
-            not data.event or \
-            not data.event.message or \
-            not data.event.message.content: return
+    if not data.event.message.content or \
+            not data.event.sender.sender_id.user_id:
+        return
     ctt = json.loads(data.event.message.content)
-    if 'text' in ctt and ctt['text'] == '/output_all_file':
-        if not data.event.sender or \
-                not data.event.sender.sender_id or \
-                not data.event.sender.sender_id.user_id: return
-        new_loop.call_soon_threadsafe(output_wrapper, data.event.sender.sender_id.user_id)
-    print("do_p2_im_message_receive_v1: \n")
+    if 'text' in ctt and ctt['text'] in ['help', '/help', '帮助']:
+        # new_loop.call_soon_threadsafe(output_wrapper, data.event.sender.sender_id.user_id)
+        new_loop.call_soon_threadsafe(send_code_params_guide, data.event.sender.sender_id.user_id)
+    elif 'text' in ctt and ctt['text'].startswith(new_code_title_prefix):
+        new_loop.call_soon_threadsafe(new_code_params, ctt['text'], data.event.sender.sender_id.user_id)
+    elif 'text' in ctt and ctt['text'].startswith(search_code_prefix):
+        new_loop.call_soon_threadsafe(get_code_params, ctt['text'], data.event.sender.sender_id.user_id)
+    elif 'text' in ctt and ctt['text'].startswith(multi_search_code_prefix):
+        pass
+        # new_loop.call_soon_threadsafe(get_code_params, ctt['text'], data.event.sender.sender_id.user_id)
+    print("do_p2_im_message_receive_v1: \n" + str(data))
 
 
 def do_p2_application_bot_menu_v6(data: P2ApplicationBotMenuV6) -> None:
     key = data.event.event_key
     if key == "menu0201":
-        new_loop.call_soon_threadsafe(send_card, data.event.operator.operator_id.user_id)
+        new_loop.call_soon_threadsafe(send_code_params_guide, data.event.operator.operator_id.user_id)
     if key == "menu0301":
         new_loop.call_soon_threadsafe(output_wrapper, data.event.operator.operator_id.user_id)
     print("do_p2_application_bot_menu_v6: \n")

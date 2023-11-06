@@ -9,7 +9,6 @@ from PIL import Image
 from pdf2image.pdf2image import convert_from_path
 from reportlab.lib.pagesizes import A4
 
-pdfmetrics.registerFont(TTFont("SimSun", "SimSun.ttf"))
 '''
 
 用于生成包含content文字内容的水印pdf文件
@@ -37,6 +36,7 @@ def create_water_mark(content: str,
                       text_stroke_color_rgb: Tuple[int, int, int] = (0, 0, 0),
                       text_fill_color_rgb: Tuple[int, int, int] = (0, 0, 0),
                       text_fill_alpha: Union[int, float] = 1) -> None:
+    pdfmetrics.registerFont(TTFont("SimSun", "SimSun.ttf"))
     # 创建PDF文件，指定文件名及尺寸，以像素为单位
     c = canvas.Canvas(filename, pagesize=(width * units.mm, height * units.mm))
     # 画布平移保证文字完整性
