@@ -4,10 +4,12 @@ import json
 import lark_oapi as lark
 import lark_oapi.adapter.flask as lFlask
 import lark_oapi.api.im.v1 as imV1
+from lark_oapi import Card
 from lark_oapi.api.application.v6.model.p2_application_bot_menu_v6 import P2ApplicationBotMenuV6
-from main_feishu import output_wrapper, get_code_params, update_card, send_code_params_guide, new_code_params, \
-    new_code_title_prefix, search_code_prefix, multi_search_code_prefix, output_code_prefix, multi_output_code_prefix, \
-    output_func, multi_get_code_params, multi_output_func
+from main_feishu import search_code_func, new_code_params, \
+    new_doc_prefix, search_doc_prefix, multi_search_doc_prefix, output_doc_prefix, multi_output_doc_prefix, \
+    output_func, multi_search_code_func, multi_output_func, send_doc_guide, is_help_text, send_menu_doc_guide, \
+    card_prefix, send_card, card_action
 
 from threading import Thread
 import asyncio
@@ -43,6 +45,14 @@ import asyncio
 # python main_server_feishu.py
 
 
+# 如果您的应用并不需要实时与用户交互结果，可以将这些任务与 HTTP 处理逻辑分离，交给另一个专注于后台任务处理的服务（如 Celery）。
+# 这样就可以使得 Web 服务器专注于它最擅长的事情——处理尽可能多的 HTTP 请求，而不必为那些可异步处理的耗时任务而等待。
+
+# 正常情况下，使用asyncio调用run，只是运行了事件循环，但flask不支持，也就等价于同步。
+# 因此，还是需要采用asyncio.new_event_loop的方式，将接下来的处理交给事件循环。然后直接返回response。
+# 没有及时接受到response，除此之外和隧道的性能也相关。后续部署到（飞书）云服务上。
+
+
 app = Flask(__name__)
 
 
@@ -56,50 +66,57 @@ t = Thread(target=start_thread_loop, args=(new_loop,))
 t.start()
 
 
-def do_p2_im_message_receive_v1(data: imV1.P2ImMessageReceiveV1) -> None:
-    if not data.event.message.content or \
-            not data.event.sender.sender_id.user_id:
-        return
+def im_message_receive(data: imV1.P2ImMessageReceiveV1):
     ctt = json.loads(data.event.message.content)
-    user_id = data.event.sender.sender_id.user_id
-    if user_id and 'text' in ctt:
-        content = ctt['text']
-        if content in ['help', '/help', '帮助']:
-            # new_loop.call_soon_threadsafe(output_wrapper, data.event.sender.sender_id.user_id)
-            new_loop.call_soon_threadsafe(send_code_params_guide, user_id)
-        elif content.startswith(new_code_title_prefix):
-            new_loop.call_soon_threadsafe(new_code_params, content, user_id)
-        elif content.startswith(search_code_prefix):
-            new_loop.call_soon_threadsafe(get_code_params, content, user_id)
-        elif content.startswith(multi_search_code_prefix):
-            new_loop.call_soon_threadsafe(multi_get_code_params, content, user_id)
-        elif content.startswith(output_code_prefix):
-            new_loop.call_soon_threadsafe(output_func, content, user_id)
-        elif content.startswith(multi_output_code_prefix):
-            new_loop.call_soon_threadsafe(multi_output_func, content, user_id)
-        # new_loop.call_soon_threadsafe(get_code_params, ctt['text'], data.event.sender.sender_id.user_id)
-    print("do_p2_im_message_receive_v1: \n" + str(data))
+    chat_id = data.event.message.chat_id
+    content = ctt['text']
+    if is_help_text(content):
+        send_doc_guide(chat_id)
+    elif content.startswith(card_prefix):
+        send_card("chat_id", chat_id)
+    elif content.startswith(new_doc_prefix):
+        new_code_params(content, chat_id)
+    elif content.startswith(search_doc_prefix):
+        search_code_func(content, chat_id)
+    elif content.startswith(multi_search_doc_prefix):
+        multi_search_code_func(content, chat_id)
+    elif content.startswith(output_doc_prefix):
+        output_func(content, chat_id)
+    elif content.startswith(multi_output_doc_prefix):
+        multi_output_func(content, chat_id)
+
+
+def bot_menu(data: P2ApplicationBotMenuV6):
+    key = data.event.event_key
+    user_id = data.event.operator.operator_id.user_id
+    send_menu_doc_guide(user_id, key)
+
+
+def do_p2_im_message_receive_v1(data: imV1.P2ImMessageReceiveV1) -> None:
+    new_loop.call_soon_threadsafe(im_message_receive, data)
 
 
 def do_p2_application_bot_menu_v6(data: P2ApplicationBotMenuV6) -> None:
-    key = data.event.event_key
-    if key == "menu0201":
-        new_loop.call_soon_threadsafe(send_code_params_guide, data.event.operator.operator_id.user_id)
-    if key == "menu0301":
-        new_loop.call_soon_threadsafe(output_wrapper, data.event.operator.operator_id.user_id)
-    print("do_p2_application_bot_menu_v6: \n")
+    new_loop.call_soon_threadsafe(bot_menu, data)
 
 
-def do_customized_event(data: lark.CustomizedEvent) -> None:
-    print(lark.JSON.marshal(data))
+def card_event(card: Card) -> None:
+    new_loop.call_soon_threadsafe(card_action, card)
 
 
-token = "sIbA8tRAgaRNQo9MjKsZUbvYMTp1jXo0"
+params = [
+    "",
+    "sIbA8tRAgaRNQo9MjKsZUbvYMTp1jXo0",
+    lark.LogLevel.DEBUG
+]
 
-handler = lark.EventDispatcherHandler.builder("", token, lark.LogLevel.DEBUG) \
+event_handler = lark.EventDispatcherHandler.builder(*params) \
     .register_p2_im_message_receive_v1(do_p2_im_message_receive_v1) \
     .register_p2_application_bot_menu_v6(do_p2_application_bot_menu_v6) \
-    .register_p1_customized_event("message", do_customized_event) \
+    .build()
+
+card_handler = lark.CardActionHandler.builder(*params) \
+    .register(card_event) \
     .build()
 
 
@@ -110,32 +127,38 @@ def index():
 
 @app.route('/event', methods=['POST'])
 def handle_event():
-    print("[handle_event] ---call---")
     data = request.get_json()
     if 'type' in data and data['type'] == 'url_verification':
         print("[url_verification]" + data['challenge'])
         return jsonify({
             'challenge': data['challenge']
         })
-
-    if 'token' in data \
-            and data['token'] != token \
-            and 'action' in data:
-        print("[update_card] call" + str(data))
-        new_loop.call_soon_threadsafe(update_card, data)
-        return jsonify({"message": "Data received successfully"}), 200
-
-    resp = handler.do(lFlask.parse_req())
+    req = lFlask.parse_req()
+    lark.logger.info("[handle_event] " + lark.JSON.marshal(req.body, indent=4))
+    resp = event_handler.do(lFlask.parse_req())
     return lFlask.parse_resp(resp)
 
 
-# def check_decode():
-# 	bytes_b1 = (timestamp + nonce + encrypt_key).encode('utf-8')
-# 	bytes_b = bytes_b1 + body
-# 	h = hashlib.sha256(bytes_b)
-# 	signature = h.hexdigest()
-# check if request headers['X-Lark-Signature'] equals to signature
+@app.route('/card', methods=['POST'])
+def handle_card():
+    data = request.get_json()
+    if 'type' in data and data['type'] == 'url_verification':
+        print("[url_verification]" + data['challenge'])
+        return jsonify({
+            'challenge': data['challenge']
+        })
+    req = lFlask.parse_req()
+    lark.logger.info("[handle_card] " + lark.JSON.marshal(req.body, indent=4))
+    resp = card_handler.do(lFlask.parse_req())
+    return lFlask.parse_resp(resp)
+
+
+@app.after_request
+def after_request(response):
+    # todo 去重
+    lark.logger.info("[after_request] " + lark.JSON.marshal(response.data, indent=4))
+    return response
+
 
 if __name__ == '__main__':
-    # ip = socket.gethostbyname(socket.gethostname()) todo get by socket
     app.run(port=5000, threaded=True)  # (host='192.168.0.107', port=5000) # sudo ufw allow 5000

@@ -1,11 +1,13 @@
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
 import json
+from datetime import datetime
 
 Base = declarative_base()
 
 
 # 要定义在 create session 之前
+# todo 删除数据库 / 实时同步 or 数据库同步新增按钮
 class Document(Base):
     __tablename__ = 'document'
 
@@ -21,22 +23,32 @@ class Document(Base):
 
     def print_doc(self):
         strings = \
-            f"[print_code] code: {self.category} {self.section} "\
-            f"{self.relationship}{self.document_number:03d} {self.title}"\
+            f"[print_code] code: {self.category} {self.section} " \
+            f"{self.relationship}{self.document_number:03d} {self.title}" \
             f"token:{self.token} obj_token:{self.obj_token} parent_token:{self.parent_token}"
         print(strings)
         return strings
 
-    def get_code_title(self):
-        print(f"[show_record] code_title: {self.category} {self.section} " +
-              f"{self.relationship} {self.document_number:03d} {self.title}")
-        return f"{self.category}{self.section}{self.relationship}{self.document_number:03d}{self.title}"
+    def get_codes(self):
+        return f"{self.category}{self.section}{self.relationship}{self.document_number:03d}"
 
-    @staticmethod
-    def get_code(category, section, relationship, document_number):
-        print(f"[print_code] code: {category} {section} " +
-              f"{relationship} {document_number:03d}")
-        return f"{category}{section}{relationship}{document_number:03d}"
+    def get_sub_title(self):
+        return f"{self.get_codes()}{Mappings.get_class_name_time(self.parent_token)}"
+
+    def get_timestamp_version(self):
+        return Mappings.get_timestamp_version(self.parent_token)
+
+    def get_full_class_name(self):
+        return Mappings.get_class_fullname(self.parent_token)
+
+    def get_code_title(self):
+        return f"{self.get_codes()}{self.title}"
+
+    # @staticmethod
+    # def get_code(category, section, relationship, document_number):
+    #     print(f"[print_code] code: {category} {section} " +
+    #           f"{relationship} {document_number:03d}")
+    #     return f"{category}{section}{relationship}{document_number:03d}"
 
     @staticmethod
     def commit_session():
@@ -87,7 +99,7 @@ class Mappings:
                 '亲子关系类': '02',
                 '孝亲关系类': '03',
                 '夫妻关系类': '04',
-                '通用关系类': '00',
+                '通用关系类': '05',
                 # '生命成长类': 'I',
                 # '亲子关系类': 'II',
                 # '孝亲关系类': 'III',
@@ -97,12 +109,45 @@ class Mappings:
         },
         'class_name': {
             'text': "请输入课程名称",
+            'placeholder': "课程名称",
             'option': {
                 '网络七期': 'VwrUwqamZiGRpGkndmGcFBJhn2d',
-                '亲子关系类': 'LU46wq2kIixvGVkfenqcX4bMnfc',
+                '未来八期': 'LU46wq2kIixvGVkfenqcX4bMnfc',
             }
         }
     }
+
+    class_info = {
+        'LU46wq2kIixvGVkfenqcX4bMnfc': {
+            'name': '未来八期',
+            'fullname': '“我们是中国的未来”孝亲反哺专场第8期',
+            'time': '20231015'
+        },
+        'VwrUwqamZiGRpGkndmGcFBJhn2d': {
+            'name': '网络七期',
+            'fullname': '网络基础班第七期',
+            'time': '20221019'
+        },
+    }
+
+    @staticmethod
+    def get_class_name_time(key: str, time: str = None):
+        if not time:
+            time = Mappings.class_info[key]['time']
+        name = Mappings.class_info[key]['name']
+        return f"{name}{time}"
+
+    @staticmethod
+    def get_class_fullname(key: str):
+        return Mappings.class_info[key]['fullname']
+
+    @staticmethod
+    def get_timestamp_version(version: str = '一'):
+        # 获取当前时间
+        now = datetime.now()
+        # 格式化日期
+        formatted_date = now.strftime("%Y%m%d")
+        return f"{formatted_date}第{version}版"
 
     @staticmethod
     def get_option_suggest(key: str):
@@ -215,12 +260,10 @@ def get_origin_code_titles():
     ]
 
 
-def set_manual_record(message: str):
+def set_manual_record(mapped_category, mapped_section, mapped_relationship, mapped_parent_token, title):
     """
     set record manually, count new document bigger than others in the same type
     """
-    params = map_manual_input(message)
-    mapped_category, mapped_section, mapped_relationship, mapped_parent_token, title = params
     document_number = get_next_document_number(mapped_category, mapped_section, mapped_relationship)
 
     return set_new_doc(
@@ -247,6 +290,14 @@ def find_manual_record(message: str):
     ).order_by(
         Document.document_number.desc()
     ).first()
+
+
+def find_all_records(class_name: str):
+    return session.query(Document).filter_by(
+        parent_token=Mappings.map_option('class_name', class_name)
+    ).order_by(
+        Document.document_number
+    ).all()
 
 
 # def find_class_record(message: str):

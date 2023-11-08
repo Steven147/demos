@@ -225,20 +225,30 @@ def download_export_task_request_wrapper(client: Client, file_token: str, output
     f.close()
 
 
-def create_document_block_children_request_wrapper(client: Client, document_id: str, block_id: str) -> Optional[str]:
-    body = docxV1.CreateDocumentBlockChildrenRequestBody.builder() \
-        .children(
-        [
-            docxV1.Block.builder().block_type(23).file(
-                docxV1.File.builder()
-                # .token(file_token)
-                # .name("file")
-                # .view_type(1)
+def create_document_block_children_request_wrapper(
+        client: Client, document_id: str, block_id: str, text: str
+) -> Optional[str]:
+
+    body = docxV1.CreateDocumentBlockChildrenRequestBody.builder()\
+            .children([docxV1.Block.builder() \
+                .block_type(2)
+                .text(docxV1.Text.builder()
+                    .style(docxV1.TextStyle.builder()
+                        .build())
+                    .elements([docxV1.TextElement.builder()
+                        .text_run(docxV1.TextRun.builder()
+                            .content(text)
+                            .text_element_style(docxV1.TextElementStyle.builder()
+                                .bold(True)
+                                .build())
+                            .build())
+                        .build()
+                        ])
+                    .build())
                 .build()
-            ).build()
-        ]) \
-        .index(0) \
-        .build()
+                ]) \
+            .index(0) \
+            .build()
 
     # 构造请求对象
     request: docxV1.CreateDocumentBlockChildrenRequest = docxV1.CreateDocumentBlockChildrenRequest.builder() \
@@ -357,7 +367,7 @@ def patch_message_request_wrapper(client: Client, message_id: str, content: str)
         return
 
 
-def create_document_request_wrapper(client: Client, space_id: str, folder_token: str, title: str):
+def create_wiki_document_request_wrapper(client: Client, space_id: str, folder_token: str, title: str):
     # 构造请求对象
     request: wikiV2.CreateSpaceNodeRequest = wikiV2.CreateSpaceNodeRequest.builder() \
         .space_id(space_id) \
@@ -381,4 +391,4 @@ def create_document_request_wrapper(client: Client, space_id: str, folder_token:
 
     # 处理业务结果
     lark.logger.info(lark.JSON.marshal(response.data, indent=4))
-    return response.data.node.node_token
+    return response.data.node
