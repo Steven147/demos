@@ -6,11 +6,10 @@ import lark_oapi.adapter.flask as lFlask
 import lark_oapi.api.im.v1 as imV1
 from lark_oapi import Card
 from lark_oapi.api.application.v6.model.p2_application_bot_menu_v6 import P2ApplicationBotMenuV6
-from main_feishu import search_code_func, new_code_params, \
-    new_doc_prefix, search_doc_prefix, multi_search_doc_prefix, output_doc_prefix, multi_output_doc_prefix, \
+from main_feishu import search_code_func, new_doc_func, \
     output_func, multi_search_code_func, multi_output_func, send_doc_guide, is_help_text, send_menu_doc_guide, \
-    card_prefix, send_card, card_action
-
+    send_card, card_action
+from main_feishu import Command
 from threading import Thread
 import asyncio
 
@@ -62,45 +61,44 @@ def start_thread_loop(loop):
 
 
 new_loop = asyncio.new_event_loop()
-t = Thread(target=start_thread_loop, args=(new_loop,))
-t.start()
+Thread(target=start_thread_loop, args=(new_loop,)).start()
 
 
-def im_message_receive(data: imV1.P2ImMessageReceiveV1):
+def _im_message_receive(data: imV1.P2ImMessageReceiveV1):
     ctt = json.loads(data.event.message.content)
     chat_id = data.event.message.chat_id
     content = ctt['text']
     if is_help_text(content):
         send_doc_guide(chat_id)
-    elif content.startswith(card_prefix):
+    elif content.startswith(Command.card_prefix):
         send_card("chat_id", chat_id)
-    elif content.startswith(new_doc_prefix):
-        new_code_params(content, chat_id)
-    elif content.startswith(search_doc_prefix):
+    elif content.startswith(Command.new_doc_prefix):
+        new_doc_func(content, chat_id)
+    elif content.startswith(Command.search_doc_prefix):
         search_code_func(content, chat_id)
-    elif content.startswith(multi_search_doc_prefix):
+    elif content.startswith(Command.multi_search_doc_prefix):
         multi_search_code_func(content, chat_id)
-    elif content.startswith(output_doc_prefix):
+    elif content.startswith(Command.output_doc_prefix):
         output_func(content, chat_id)
-    elif content.startswith(multi_output_doc_prefix):
+    elif content.startswith(Command.multi_output_doc_prefix):
         multi_output_func(content, chat_id)
 
 
-def bot_menu(data: P2ApplicationBotMenuV6):
+def _bot_menu(data: P2ApplicationBotMenuV6):
     key = data.event.event_key
     user_id = data.event.operator.operator_id.user_id
     send_menu_doc_guide(user_id, key)
 
 
-def do_p2_im_message_receive_v1(data: imV1.P2ImMessageReceiveV1) -> None:
-    new_loop.call_soon_threadsafe(im_message_receive, data)
+def _do_p2_im_message_receive_v1(data: imV1.P2ImMessageReceiveV1) -> None:
+    new_loop.call_soon_threadsafe(_im_message_receive, data)
 
 
-def do_p2_application_bot_menu_v6(data: P2ApplicationBotMenuV6) -> None:
-    new_loop.call_soon_threadsafe(bot_menu, data)
+def _do_p2_application_bot_menu_v6(data: P2ApplicationBotMenuV6) -> None:
+    new_loop.call_soon_threadsafe(_bot_menu, data)
 
 
-def card_event(card: Card) -> None:
+def _card_event(card: Card) -> None:
     new_loop.call_soon_threadsafe(card_action, card)
 
 
@@ -111,12 +109,12 @@ params = [
 ]
 
 event_handler = lark.EventDispatcherHandler.builder(*params) \
-    .register_p2_im_message_receive_v1(do_p2_im_message_receive_v1) \
-    .register_p2_application_bot_menu_v6(do_p2_application_bot_menu_v6) \
+    .register_p2_im_message_receive_v1(_do_p2_im_message_receive_v1) \
+    .register_p2_application_bot_menu_v6(_do_p2_application_bot_menu_v6) \
     .build()
 
 card_handler = lark.CardActionHandler.builder(*params) \
-    .register(card_event) \
+    .register(_card_event) \
     .build()
 
 

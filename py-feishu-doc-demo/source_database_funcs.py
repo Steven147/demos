@@ -12,14 +12,14 @@ class Document(Base):
     __tablename__ = 'document'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    category = Column(String)
+    category = Column(String)  # combine key
     section = Column(String)
     relationship = Column(String)
-    document_number = Column(Integer)
-    title = Column(String(50))
+    document_number = Column(Integer)  # init
+    parent_token = Column(String(30))
+    title = Column(String(50))  # late init
     token = Column(String(30))
     obj_token = Column(String(30))
-    parent_token = Column(String(30))
 
     def print_doc(self):
         strings = \
@@ -50,8 +50,14 @@ class Document(Base):
     #           f"{relationship} {document_number:03d}")
     #     return f"{category}{section}{relationship}{document_number:03d}"
 
+    def commit_add_doc(self):
+        self.print_doc()
+        session.add(self)
+        session.commit()
+
     @staticmethod
-    def commit_session():
+    def clear_database():
+        session.query(Document).delete(synchronize_session=False)
         session.commit()
 
 
@@ -247,43 +253,28 @@ def get_card_source_string(result=''):
 # code: B04001
 # code_stamp: D04001未来八期20231015
 
-def get_origin_code_titles():
-    return [
-        "B04III001孩子对父母的日常表达",
-        "B04III002孩子犯错后向父母说的四句话",
-        "A04III001中国当代青年的样子",
-        "A04III002爱反哺的三个对象",
-        "A04III003爱与幸福——青年优秀的四个阶段",
-        "A04III004千万不要回报父母",
-        "A04III005至德要道",
-        "D04III001孝父母的第一步",
-    ]
+
+# def set_manual_record(mapped_category, mapped_section, mapped_relationship, mapped_parent_token, document_number, title):
+#     """
+#     set record manually, count new document bigger than others in the same type
+#     """
+#
+#     return set_new_doc(
+#         mapped_category,
+#         mapped_section,
+#         mapped_relationship,
+#         document_number,
+#         title,
+#         token='',
+#         obj_token='',
+#         mapped_parent_token=mapped_parent_token,
+#     )
 
 
-def set_manual_record(mapped_category, mapped_section, mapped_relationship, mapped_parent_token, title):
+def find_manual_record(mapped_category, mapped_section, mapped_relationship, document_number_str):
     """
     set record manually, count new document bigger than others in the same type
     """
-    document_number = get_next_document_number(mapped_category, mapped_section, mapped_relationship)
-
-    return set_new_doc(
-        mapped_category,
-        mapped_section,
-        mapped_relationship,
-        document_number,
-        title,
-        token='',
-        obj_token='',
-        mapped_parent_token=mapped_parent_token,
-    )
-
-
-def find_manual_record(message: str):
-    """
-    set record manually, count new document bigger than others in the same type
-    """
-    mapped_category, mapped_section, mapped_relationship, document_number_str, _ = (
-        get_code_title_list(message))
     return session.query(Document).filter_by(
         category=mapped_category, section=mapped_section, relationship=mapped_relationship,
         document_number=int(document_number_str)
@@ -319,22 +310,22 @@ def find_all_records(class_name: str):
 #     set_new_doc(mapped_category, mapped_section, mapped_relationship, document_number, title)
 
 
-def set_new_doc(mapped_category, mapped_section, mapped_relationship, document_number,
-                title, token, obj_token, mapped_parent_token):
-    new_doc = Document(
-        category=mapped_category,
-        section=mapped_section,
-        relationship=mapped_relationship,
-        document_number=int(document_number),
-        title=title,
-        token=token,
-        obj_token=obj_token,
-        parent_token=mapped_parent_token
-    )
-    new_doc.print_doc()
-    session.add(new_doc)
-    session.commit()
-    return new_doc
+# def set_new_doc(mapped_category, mapped_section, mapped_relationship, document_number,
+#                 title, token, obj_token, mapped_parent_token):
+#     new_doc = Document(
+#         category=mapped_category,
+#         section=mapped_section,
+#         relationship=mapped_relationship,
+#         document_number=int(document_number),
+#         title=title,
+#         token=token,
+#         obj_token=obj_token,
+#         parent_token=mapped_parent_token
+#     )
+#     new_doc.print_doc()
+#     session.add(new_doc)
+#     session.commit()
+#     return new_doc
 
 
 def get_code_title_list(code_title: str):
