@@ -4,7 +4,6 @@ import lark_oapi.api.drive.v1 as driveV1
 import lark_oapi.api.wiki.v2 as wikiV2
 import lark_oapi.api.im.v1 as imV1
 from typing import Optional
-from lark_oapi.client import Client
 import os
 
 # 创建client
@@ -13,6 +12,7 @@ client = lark.Client.builder() \
     .app_secret('rceFwGZuDFcP1fYwjc812ftAsysPK1MZ') \
     .log_level(lark.LogLevel.ERROR) \
     .build()
+
 
 def list_space_request_wrapper():
     # 构造请求对象
@@ -232,29 +232,94 @@ def download_export_task_request_wrapper(file_token: str, output_dir):
 
 
 def create_document_block_children_request_wrapper(
-         document_id: str, block_id: str, text: str
+        document_id: str, block_id: str, text: str, class_fullname: str, timestamp_version: str
 ) -> Optional[str]:
+    # todo 重构并适配 update 第二版的情况（获取block进行修改）
+    divider = docxV1.Block.builder() \
+        .block_type(22) \
+        .divider(docxV1.Divider.builder().build()) \
+        .build()
 
-    body = docxV1.CreateDocumentBlockChildrenRequestBody.builder()\
-            .children([docxV1.Block.builder() \
-                .block_type(2)
-                .text(docxV1.Text.builder()
-                    .style(docxV1.TextStyle.builder()
-                        .build())
-                    .elements([docxV1.TextElement.builder()
+    empty_text = docxV1.Block.builder() \
+        .block_type(2) \
+        .text(docxV1.Text.builder() \
+              .style(docxV1.TextStyle.builder()
+                     .build())
+              .elements([docxV1.TextElement.builder()
                         .text_run(docxV1.TextRun.builder()
-                            .content(text)
-                            .text_element_style(docxV1.TextElementStyle.builder()
-                                .bold(True)
-                                .build())
-                            .build())
+                                  .content("")
+                                  .text_element_style(docxV1.TextElementStyle.builder()
+                                                      .text_color(7)
+                                                      .build())
+                                  .build())
                         .build()
-                        ])
-                    .build())
-                .build()
-                ]) \
-            .index(0) \
-            .build()
+                         ])
+              .build()) \
+        .build()
+
+    body = docxV1.CreateDocumentBlockChildrenRequestBody.builder() \
+        .children([docxV1.Block.builder()
+                  .block_type(5)  # head 3
+                  .heading3(docxV1.Text.builder()
+                            .style(docxV1.TextStyle.builder()
+                                   .build())
+                            .elements([docxV1.TextElement.builder()
+                                      .text_run(docxV1.TextRun.builder()
+                                                .content(text)
+                                                .text_element_style(docxV1.TextElementStyle.builder()
+                                                                    .underline(True)
+                                                                    .build())
+                                                .build())
+                                      .build()
+                                       ])
+                            .build())
+                  .build(),
+
+                   divider,
+
+                   empty_text, empty_text, empty_text,
+
+                   divider,
+
+                   docxV1.Block.builder()
+                  .block_type(2)
+                  .text(docxV1.Text.builder()
+                        .style(docxV1.TextStyle.builder()
+                               .align(3)
+                               .build())
+                        .elements([docxV1.TextElement.builder()
+                                  .text_run(docxV1.TextRun.builder()
+                                            .content(class_fullname)
+                                            .text_element_style(docxV1.TextElementStyle.builder()
+                                                                .text_color(7)
+                                                                .build())
+                                            .build())
+                                  .build()
+                                   ])
+                        .build())
+                  .build(),
+
+                   docxV1.Block.builder()
+                  .block_type(2)
+                  .text(docxV1.Text.builder()
+                        .style(docxV1.TextStyle.builder()
+                               .align(3)
+                               .build())
+                        .elements([docxV1.TextElement.builder()
+                                  .text_run(docxV1.TextRun.builder()
+                                            .content(timestamp_version)
+                                            .text_element_style(docxV1.TextElementStyle.builder()
+                                                                .text_color(7)
+                                                                .build())
+                                            .build())
+                                  .build()
+                                   ])
+                        .build())
+                  .build(),
+
+                   ]) \
+        .index(0) \
+        .build()
 
     # 构造请求对象
     request: docxV1.CreateDocumentBlockChildrenRequest = docxV1.CreateDocumentBlockChildrenRequest.builder() \
@@ -354,7 +419,7 @@ def create_message_request_wrapper(receive_id_type: str, receive_id: str, msg_ty
     lark.logger.info(lark.JSON.marshal(response.data, indent=4))
 
 
-def patch_message_request_wrapper( message_id: str, content: str):
+def patch_message_request_wrapper(message_id: str, content: str):
     # 构造请求对象
     request: imV1.PatchMessageRequest = imV1.PatchMessageRequest.builder() \
         .message_id(message_id) \

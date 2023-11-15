@@ -149,8 +149,10 @@ def new_doc_func(message_str: str, chat_id: str):
 
 
 def send_card(receive_id_type: str, receive_id: str):
-    create_message_request_wrapper(receive_id_type=receive_id_type, receive_id=receive_id, msg_type="interactive",
-                                   content=get_card_source_string())
+    create_message_request_wrapper(
+        receive_id_type=receive_id_type, receive_id=receive_id, msg_type="interactive",
+        content=get_card_source_string()
+    )
     # patch_message_request_wrapper(client)
 
 
@@ -171,8 +173,9 @@ def card_action(card: Card):
                 or mapped_relationship is None or mapped_parent_token is None):
             lark.logger.error("[update_card] button press without enough key" + str(cards_map))
             return
-        _create_record_and_doc(mapped_category, mapped_section, mapped_relationship, mapped_parent_token, open_chat_id,
-                               title="")
+        _create_record_and_doc(
+            mapped_category, mapped_section, mapped_relationship, mapped_parent_token, open_chat_id, title=""
+        )
     elif tag == 'select_static':
         key = action.value["key"]
         value = action.option
@@ -211,7 +214,13 @@ def _create_record_and_doc(
     # 【文档】“我们是中国的未来”孝亲反哺专场第8期 https://h4c12uuoah.feishu.cn/wiki/LU46wq2kIixvGVkfenqcX4bMnfc
 
     node = create_wiki_document_request_wrapper(space_id, new_parent_node, new_code_title)
-    create_document_block_children_request_wrapper(node.obj_token, node.obj_token, new_doc.get_sub_title())
+    create_document_block_children_request_wrapper(
+        node.obj_token,
+        node.obj_token,
+        new_doc.get_sub_title(),
+        Mappings.get_class_fullname(new_parent_node),
+        Mappings.get_timestamp_version()
+    )
     document_link = f"{Command.wiki_link_prefix}{str(node.node_token)}"
     new_doc.token = node.node_token
     new_doc.obj_token = node.obj_token
