@@ -48,13 +48,12 @@ func (model *ClientModel) CreateMessageReqWrapper(
 	receiveIdType string, receiveId string, msgType string, content string,
 ) {
 	// 创建请求对象
-	jsonStr := fmt.Sprintf(`{"text":"%s"}`, content)
 	req := larkim.NewCreateMessageReqBuilder().
 		ReceiveIdType(receiveIdType).
 		Body(larkim.NewCreateMessageReqBodyBuilder().
 			MsgType(msgType).
 			ReceiveId(receiveId).
-			Content(jsonStr).
+			Content(content).
 			Build()).
 		Build()
 

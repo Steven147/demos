@@ -1,35 +1,76 @@
 package controller
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/Steven147/demos/go-demo/model"
 	larkapplication "github.com/larksuite/oapi-sdk-go/v3/service/application/v6"
+	larkim "github.com/larksuite/oapi-sdk-go/v3/service/im/v1"
 )
 
 func getOptionSuggest(str string) string {
-	// todo move to keva model
+	// todo move to keva clientModel
 	return ""
 }
 
 type TaskController struct {
-	model *model.ClientModel
-	// todo add keva model
+	clientModel *model.ClientModel
+	cardModel   *model.CardModel
+	// todo add keva clientModel
 }
 
 func NewTaskController() *TaskController {
-	clientModel := model.NewClientModel()
 	return &TaskController{
-		model: clientModel,
+		clientModel: model.NewClientModel(),
+		cardModel:   model.NewCardModel(),
 	}
 }
 
-func (controller *TaskController) BotMenuTask(event *larkapplication.P2BotMenuV6) {
+func (taskController *TaskController) BotMenuTask(event *larkapplication.P2BotMenuV6) {
 	key := *event.Event.EventKey
 	userId := *event.Event.Operator.OperatorId.UserId
-	controller.sendDocGuide(userId, "user_id", key)
+	taskController.sendDocGuide(userId, "user_id", key)
 }
 
-func (controller *TaskController) sendDocGuide(chatId string, receiveType string, key string) {
+func (taskController *TaskController) MessageReceiveTask(event *larkim.P2MessageReceiveV1) {
+	var result map[string]interface{}
+	err := json.Unmarshal([]byte(*event.Event.Message.Content), &result)
+	if err != nil {
+
+	}
+	content := result["text"]
+	chatId := *event.Event.Message.ChatId
+	if content == model.CardPrefix {
+		taskController.clientModel.CreateMessageReqWrapper(
+			"chat_id", chatId, "interactive", taskController.cardModel.GeneratedCard(),
+		)
+	}
+}
+
+//type CardsMap = map[string]struct {
+//	category     string
+//	section      string
+//	relationship string
+//	className    string
+//}
+//
+//var cardsMap = CardsMap{}
+//
+//func (taskController *TaskController) CardActionTask(card larkcard.CardAction) {
+//	action := card.Action
+//	tag := action.Tag
+//	openMessageId := card.OpenMessageID
+//	open_chat_id := card.OpenChatId
+//	if tag == "button" {
+//		record := cardsMap[openMessageId]
+//		mappedCategory, mapped_section, mapped_relationship, mapped_parent_token :=
+//			record.category, record.section, record.relationship, record.className
+//
+//	}
+//
+//}
+
+func (taskController *TaskController) sendDocGuide(chatId string, receiveType string, key string) {
 
 	guideStr1NewDoc := fmt.Sprintf(
 		`1. 分别输入文档信息，生成编码。\n`+
@@ -98,5 +139,5 @@ func (controller *TaskController) sendDocGuide(chatId string, receiveType string
 		return
 	}
 
-	controller.model.CreateMessageReqWrapper(receiveType, chatId, "text", guideStr)
+	taskController.clientModel.CreateMessageReqWrapper(receiveType, chatId, "text", fmt.Sprintf(`{"text":"%s"}`, guideStr))
 }

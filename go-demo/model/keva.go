@@ -1,6 +1,7 @@
 package model
 
 var (
+	CardPrefix           = "卡片"
 	NewDocPrefix         = "编码："
 	SearchDocPrefix      = "查询："
 	MultiSearchDocPrefix = "批量查询："
@@ -16,4 +17,5 @@ var Mappings = map[string]string{
 }
 
 type KevaModel struct {
+	maps map[string]string
 }
