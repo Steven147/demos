@@ -1,3 +1,5 @@
+import os.path
+
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
 import json
@@ -61,8 +63,11 @@ class Document(Base):
         session.commit()
 
 
+# 创建 SQLite 数据库文件的绝对路径
+db_path = os.path.join(os.path.dirname(__file__), 'document.db')
+
 # 创建engine，并连接SQLite数据库
-engine = create_engine('sqlite:///test.db')
+engine = create_engine(f'sqlite:///{db_path}')
 
 # 创建Session对象
 Session = sessionmaker(bind=engine)

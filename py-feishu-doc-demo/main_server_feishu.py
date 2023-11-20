@@ -1,17 +1,8 @@
 from flask import Flask, request, jsonify
-import json
 
 import lark_oapi as lark
 import lark_oapi.adapter.flask as lFlask
-import lark_oapi.api.im.v1 as imV1
-from lark_oapi import Card
-from lark_oapi.api.application.v6.model.p2_application_bot_menu_v6 import P2ApplicationBotMenuV6
-from main_feishu import search_code_func, new_doc_func, \
-    output_func, multi_search_code_func, multi_output_func, send_doc_guide, is_help_text, send_menu_doc_guide, \
-    send_card, card_action
-from main_feishu import Command
-from threading import Thread
-import asyncio
+from controller.space_task_controller import SpaceTaskController
 
 # 请确保您的工作目录正确
 # cd /home/natfrp/
@@ -54,73 +45,18 @@ import asyncio
 
 app = Flask(__name__)
 
-
-def start_thread_loop(loop):
-    asyncio.set_event_loop(loop)
-    loop.run_forever()
-
-
-new_loop = asyncio.new_event_loop()
-Thread(target=start_thread_loop, args=(new_loop,)).start()
-
-
-def _im_message_receive(data: imV1.P2ImMessageReceiveV1):
-    ctt = json.loads(data.event.message.content)
-    chat_id = data.event.message.chat_id
-    content = ctt['text']
-    if is_help_text(content):
-        send_doc_guide(chat_id)
-    elif content.startswith(Command.card_prefix):
-        send_card("chat_id", chat_id)
-    elif content.startswith(Command.new_doc_prefix):
-        new_doc_func(content, chat_id)
-    elif content.startswith(Command.search_doc_prefix):
-        search_code_func(content, chat_id)
-    elif content.startswith(Command.multi_search_doc_prefix):
-        multi_search_code_func(content, chat_id)
-    elif content.startswith(Command.output_doc_prefix):
-        output_func(content, chat_id)
-    elif content.startswith(Command.multi_output_doc_prefix):
-        multi_output_func(content, chat_id)
-
-
-def _bot_menu(data: P2ApplicationBotMenuV6):
-    key = data.event.event_key
-    user_id = data.event.operator.operator_id.user_id
-    send_menu_doc_guide(user_id, key)
-
-
-def _do_p2_im_message_receive_v1(data: imV1.P2ImMessageReceiveV1) -> None:
-    new_loop.call_soon_threadsafe(_im_message_receive, data)
-
-
-def _do_p2_application_bot_menu_v6(data: P2ApplicationBotMenuV6) -> None:
-    new_loop.call_soon_threadsafe(_bot_menu, data)
-
-
-def _card_event(card: Card) -> None:
-    new_loop.call_soon_threadsafe(card_action, card)
-
+spaceTaskController = SpaceTaskController(space_id="7291489975366270978")
 
 params = [
-    "",
-    "sIbA8tRAgaRNQo9MjKsZUbvYMTp1jXo0",
+    "",  # encrypt_key
+    "sIbA8tRAgaRNQo9MjKsZUbvYMTp1jXo0",  # verification_token
     lark.LogLevel.DEBUG
 ]
-
-event_handler = lark.EventDispatcherHandler.builder(*params) \
-    .register_p2_im_message_receive_v1(_do_p2_im_message_receive_v1) \
-    .register_p2_application_bot_menu_v6(_do_p2_application_bot_menu_v6) \
-    .build()
-
-card_handler = lark.CardActionHandler.builder(*params) \
-    .register(_card_event) \
-    .build()
 
 
 @app.route('/')
 def index():
-    return 'Hello, World!'
+    return "Hello, World! Feishu Robot By linshaoqin"
 
 
 @app.route('/event', methods=['POST'])
@@ -132,6 +68,10 @@ def handle_event():
             'challenge': data['challenge']
         })
     req = lFlask.parse_req()
+    event_handler = lark.EventDispatcherHandler.builder(*params) \
+        .register_p2_im_message_receive_v1(spaceTaskController.im_message_receive) \
+        .register_p2_application_bot_menu_v6(spaceTaskController.bot_menu) \
+        .build()
     lark.logger.info("[handle_event] " + lark.JSON.marshal(req.body, indent=4))
     resp = event_handler.do(lFlask.parse_req())
     return lFlask.parse_resp(resp)
@@ -146,6 +86,9 @@ def handle_card():
             'challenge': data['challenge']
         })
     req = lFlask.parse_req()
+    card_handler = lark.CardActionHandler.builder(*params) \
+        .register(spaceTaskController.card_action) \
+        .build()
     lark.logger.info("[handle_card] " + lark.JSON.marshal(req.body, indent=4))
     resp = card_handler.do(lFlask.parse_req())
     return lFlask.parse_resp(resp)
