@@ -1,3 +1,7 @@
 /py-feishu-doc-demo/model/document.db
 /py-feishu-doc-demo/model/files_model/input_file/
 /py-feishu-doc-demo/model/files_model/output_file/
+/py-feishu-doc-demo/model/files_model/__pycache__/
+/py-feishu-doc-demo/model/__pycache__/
+/py-feishu-doc-demo/controller/__pycache__/
+/py-feishu-doc-demo/model/files_model/watermark.pdf
