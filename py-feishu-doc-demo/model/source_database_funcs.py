@@ -1,27 +1,27 @@
-import os.path
-
-from sqlalchemy import create_engine, Column, Integer, String
-from sqlalchemy.orm import sessionmaker, declarative_base
 import json
 from datetime import datetime
+from application import app, db
 
-Base = declarative_base()
+
+@app.shell_context_processor
+def make_shell_context():
+    return {'db': db, 'Document': Document}
 
 
 # 要定义在 create session 之前
 # todo 删除数据库 / 实时同步 or 数据库同步新增按钮
-class Document(Base):
+class Document(db.Model):
     __tablename__ = 'document'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    category = Column(String)  # combine key
-    section = Column(String)
-    relationship = Column(String)
-    document_number = Column(Integer)  # init
-    parent_token = Column(String(30))
-    title = Column(String(50))  # late init
-    token = Column(String(30))
-    obj_token = Column(String(30))
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    category = db.Column(db.String)  # combine key
+    section = db.Column(db.String)
+    relationship = db.Column(db.String)
+    document_number = db.Column(db.Integer)  # init
+    parent_token = db.Column(db.String(30))
+    title = db.Column(db.String(50))  # late init
+    token = db.Column(db.String(30))
+    obj_token = db.Column(db.String(30))
 
     def print_doc(self):
         strings = \
@@ -54,28 +54,18 @@ class Document(Base):
 
     def commit_add_doc(self):
         self.print_doc()
-        session.add(self)
-        session.commit()
+        db.session.add(self)
+        db.session.commit()
 
     @staticmethod
     def clear_database():
-        session.query(Document).delete(synchronize_session=False)
-        session.commit()
+        db.session.query(Document).delete(synchronize_session=False)
+        db.session.commit()
 
-
-# 创建 SQLite 数据库文件的绝对路径
-db_path = os.path.join(os.path.dirname(__file__), 'document.db')
-
-# 创建engine，并连接SQLite数据库
-engine = create_engine(f'sqlite:///{db_path}')
-
-# 创建Session对象
-Session = sessionmaker(bind=engine)
 
 # 创建表的语句
-Base.metadata.create_all(engine)
-
-session = Session()
+with app.app_context():
+    db.create_all()
 
 
 class Mappings:
@@ -280,7 +270,7 @@ def find_manual_record(mapped_category, mapped_section, mapped_relationship, doc
     """
     set record manually, count new document bigger than others in the same type
     """
-    return session.query(Document).filter_by(
+    return db.session.query(Document).filter_by(
         category=mapped_category, section=mapped_section, relationship=mapped_relationship,
         document_number=int(document_number_str)
     ).order_by(
@@ -289,7 +279,7 @@ def find_manual_record(mapped_category, mapped_section, mapped_relationship, doc
 
 
 def find_all_records(class_name: str):
-    return session.query(Document).filter_by(
+    return db.session.query(Document).filter_by(
         parent_token=Mappings.map_option('class_name', class_name)
     ).order_by(
         Document.document_number
@@ -310,7 +300,7 @@ def find_all_records(class_name: str):
 #     for result in get_results(mapped_category, mapped_section, mapped_relationship):
 #         if result.document_number == document_number:
 #             print("[set_record_with_code_title] document_number duplicated, force replace title")
-#             session.delete(result)
+#             db.session.delete(result)
 #
 #     set_new_doc(mapped_category, mapped_section, mapped_relationship, document_number, title)
 
@@ -328,8 +318,8 @@ def find_all_records(class_name: str):
 #         parent_token=mapped_parent_token
 #     )
 #     new_doc.print_doc()
-#     session.add(new_doc)
-#     session.commit()
+#     db.session.add(new_doc)
+#     db.session.commit()
 #     return new_doc
 
 
@@ -378,7 +368,7 @@ def get_next_document_number(mapped_category, mapped_section, mapped_relationshi
 
 def get_results(mapped_category, mapped_section, mapped_relationship):
     # 获取数据库中同一分类、版块和关系下最大的文档编号
-    return session.query(Document).filter_by(
+    return db.session.query(Document).filter_by(
         category=mapped_category, section=mapped_section, relationship=mapped_relationship
     ).order_by(
         Document.document_number.desc()
@@ -387,7 +377,7 @@ def get_results(mapped_category, mapped_section, mapped_relationship):
 
 def show_record():
     # 查询
-    docs = session.query(Document).filter(Document.id > 0)
+    docs = db.session.query(Document).filter(Document.id > 0)
     # 显示查询结果
     for doc in docs:
         doc.get_code_title()

@@ -50,6 +50,12 @@ class SpaceTaskController(TaskController):
             'cli_a5bb0a8ac8f99013', 'rceFwGZuDFcP1fYwjc812ftAsysPK1MZ'
         )
 
+    # 如果您的应用并不需要实时与用户交互结果，可以将这些任务与 HTTP 处理逻辑分离，交给另一个专注于后台任务处理的服务（如 Celery）。
+    # 这样就可以使得 Web 服务器专注于它最擅长的事情——处理尽可能多的 HTTP 请求，而不必为那些可异步处理的耗时任务而等待。
+
+    # 正常情况下，使用asyncio调用run，只是运行了事件循环，但flask不支持，也就等价于同步。
+    # 因此，还是需要采用asyncio.new_event_loop的方式，将接下来的处理交给事件循环。然后直接返回response。
+
     def card_action(self, card: Card):
         self.loop.call_soon_threadsafe(self._card_action, card)
 
@@ -287,6 +293,16 @@ class SpaceTaskController(TaskController):
             token='',
             obj_token=''
         )
+        # Document(
+        #     category='mapped_category',
+        #     section='mapped_section',
+        #     relationship='mapped_relationship',
+        #     document_number=1,
+        #     parent_token='mapped_parent_token',
+        #     title='title',
+        #     token='',
+        #     obj_token=''
+        # )
         new_code_title = new_doc.get_code_title()
         new_parent_node = new_doc.parent_token
         # 【文档】“我们是中国的未来”孝亲反哺专场第8期 https://h4c12uuoah.feishu.cn/wiki/LU46wq2kIixvGVkfenqcX4bMnfc
