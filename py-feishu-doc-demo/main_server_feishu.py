@@ -46,5 +46,5 @@ from application import app
 # $ flask db upgrade
 
 # if __name__ == '__main__':
-#     app.run(port=5000, threaded=True)  # (host='192.168.0.107', port=5000) # sudo ufw allow 5000
+#     app.run()
 
