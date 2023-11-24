@@ -5,3 +5,5 @@
 /py-feishu-doc-demo/model/__pycache__/
 /py-feishu-doc-demo/controller/__pycache__/
 /py-feishu-doc-demo/model/files_model/watermark.pdf
+/py-feishu-doc-demo/__pycache__/
+/py-feishu-doc-demo/application/__pycache__/
