@@ -17,6 +17,10 @@ from application import app
 # journalctl -u natfrp.service -f
 # [远程管理 | SakuraFrp](https://www.natfrp.com/remote/v2)
 
+# env | grep -E 'http_proxy|https_proxy'
+# git config --global http.proxy 'http://127.0.0.1:7890'
+# git config --global https.proxy 'http://127.0.0.1:7890'
+
 # cd /DATA/Documents/demos/py-feishu-doc-demo
 # conda config --set auto_activate_base [true]
 # source ~/.bashrc
