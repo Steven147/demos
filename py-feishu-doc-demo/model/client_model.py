@@ -56,13 +56,32 @@ class ClientModel:
         # 处理业务结果
         lark.logger.info(lark.JSON.marshal(response.data, indent=4))
 
-    def list_space_node_request_wrapper(self, space_id: str, parent_node_token: str = "") \
+    def list_space_node_request_wrapper(self, space_id: str, parent_node_token: str) \
             -> Optional[wikiV2.List[wikiV2.Node]]:
+        data = self.list_space_node_request_inner_wrapper(space_id, parent_node_token)
+        result = data.items
+        while data.has_more:
+            data = self.list_space_node_request_inner_wrapper(space_id, parent_node_token, data.page_token)
+            result += data.items
+        return result
+
+    def list_space_node_request_inner_wrapper(
+            self,
+            space_id: str,
+            parent_node_token: str,
+            page_token: str = "",
+            page_size: int = 10,
+    ):
+
         # 构造请求对象
-        request: wikiV2.ListSpaceNodeRequest = wikiV2.ListSpaceNodeRequest.builder() \
-            .space_id(space_id) \
-            .parent_node_token(parent_node_token) \
+        request: wikiV2.ListSpaceNodeRequest = (
+            wikiV2.ListSpaceNodeRequest.builder()
+            .space_id(space_id)
+            .page_size(page_size)
+            .page_token(page_token)
+            .parent_node_token(parent_node_token)
             .build()
+        )
 
         # 发起请求
         response: wikiV2.ListSpaceNodeResponse = self.client.wiki.v2.space_node.list(
@@ -77,7 +96,7 @@ class ClientModel:
 
         # 处理业务结果
         lark.logger.info(lark.JSON.marshal(response.data, indent=4))
-        return response.data.items  # pyright: ignore[reportOptionalMemberAccess]
+        return response.data  # pyright: ignore[reportOptionalMemberAccess]
 
     def move_docs_to_wiki_space_node_request_wrapper(self, space_id: int, parent_wiki_token: str, obj_token: str):
         # 构造请求对象

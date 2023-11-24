@@ -223,7 +223,6 @@ class SpaceTaskController(TaskController):
             f"自动回复\\n"
             f">>>生成编码和标题：A0403001中国当代青年的样子\\n"
             f">>>生成知识库链接：... \\n"
-            f"\\n"
         )
         guide_str_2_search_doc = (
             f"2.1 输入编码，查询文章\\n"
@@ -237,7 +236,6 @@ class SpaceTaskController(TaskController):
             f"例如发送消息\\n"
             f"<<<{Command.multi_search_doc_prefix}未来八期\\n"
             f"会自动回复课程内的所有文档结果\\n"
-            f"\\n"
         )
         guide_str_3_output_doc = (
             f"3.1 输入编码，导出文档\\n"
@@ -255,7 +253,7 @@ class SpaceTaskController(TaskController):
         )
 
         if key == 'menu0201' or key == 'default':
-            guide_str += (guide_str_1_new_doc + guide_str_2_search_doc + guide_str_3_output_doc)
+            guide_str += (guide_str_1_new_doc + "\\n" + guide_str_2_search_doc + "\\n" + guide_str_3_output_doc)
         elif key == 'menu0202':
             guide_str += guide_str_1_new_doc
         elif key == 'menu0203':
